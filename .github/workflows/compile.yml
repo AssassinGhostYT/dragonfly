@@ -1,27 +1,18 @@
-name: Compilar Dragonfly
-
-on:
-  push:
-    branches: [ "master" ]
-  workflow_dispatch:
-
+name: Compile Dragonfly
+on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@v3
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v4
         with:
-          go-version: '1.24'
-
-      - name: Build Dragonfly
-        run: |
-          GOOS=linux GOARCH=arm64 go build -o dragonfly_server_arm64 main.go
-
-      - name: Subir binario
-        uses: actions/upload-artifact@v4
+          go-version: '1.24.2'
+      - name: Build ARM64
+        run: GOOS=linux GOARCH=arm64 go build -o dragonfly-arm64 main.go
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
         with:
-          name: dragonfly_server_bin
-          path: dragonfly_server_arm64
+          name: dragonfly-bin-arm64
+          path: dragonfly-arm64
