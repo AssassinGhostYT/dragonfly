@@ -109,6 +109,7 @@ func init() {
 	world.RegisterBlock(SeaLantern{})
 	world.RegisterBlock(Shroomlight{})
 	world.RegisterBlock(Slime{})
+	world.RegisterBlock(MovingBlock{MovingBlock: Air{}})
 	world.RegisterBlock(SmithingTable{})
 	world.RegisterBlock(SmoothBasalt{})
 	world.RegisterBlock(Snow{})

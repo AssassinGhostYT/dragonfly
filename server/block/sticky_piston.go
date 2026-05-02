@@ -5,6 +5,7 @@ import (
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
+	"time"
 )
 
 // StickyPiston is a block capable of pushing and pulling blocks.
@@ -82,9 +83,16 @@ func (p StickyPiston) extend(pos cube.Pos, tx *world.Tx) bool {
 	// Move blocks in reverse order to avoid overwriting.
 	for i := len(blocks) - 1; i >= 0; i-- {
 		b := tx.Block(blocks[i])
-		tx.SetBlock(blocks[i].Side(dir), b, nil)
+		mb := MovingBlock{MovingBlock: b, Facing: dir, Extending: true}
+		target := blocks[i].Side(dir)
+		tx.SetBlock(target, mb, nil)
+		tx.ScheduleBlockUpdate(target, mb, time.Millisecond*100)
 	}
 	tx.SetBlock(pushPos, PistonArmCollision{Facing: p.Facing, Sticky: true}, nil)
+
+	for _, v := range tx.Viewers(pos.Vec3()) {
+		v.ViewBlockAction(pos, MovingAction{})
+	}
 	return true
 }
 
@@ -96,8 +104,14 @@ func (p StickyPiston) retract(pos cube.Pos, tx *world.Tx) {
 	pullPos := armPos.Side(p.Facing)
 	b := tx.Block(pullPos)
 	if !p.isImmovable(b) && len(b.Model().BBox(pullPos, tx)) > 0 {
-		tx.SetBlock(armPos, b, nil)
+		mb := MovingBlock{MovingBlock: b, Facing: p.Facing.Opposite(), Extending: false}
+		tx.SetBlock(armPos, mb, nil)
+		tx.ScheduleBlockUpdate(armPos, mb, time.Millisecond*100)
 		tx.SetBlock(pullPos, Air{}, nil)
+	}
+
+	for _, v := range tx.Viewers(pos.Vec3()) {
+		v.ViewBlockAction(pos, MovingAction{})
 	}
 }
 

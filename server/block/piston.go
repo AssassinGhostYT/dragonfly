@@ -5,6 +5,7 @@ import (
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
+	"time"
 )
 
 // Piston is a block capable of pushing blocks when powered by redstone.
@@ -82,9 +83,16 @@ func (p Piston) extend(pos cube.Pos, tx *world.Tx) bool {
 	// Move blocks in reverse order to avoid overwriting.
 	for i := len(blocks) - 1; i >= 0; i-- {
 		b := tx.Block(blocks[i])
-		tx.SetBlock(blocks[i].Side(dir), b, nil)
+		mb := MovingBlock{MovingBlock: b, Facing: dir, Extending: true}
+		target := blocks[i].Side(dir)
+		tx.SetBlock(target, mb, nil)
+		tx.ScheduleBlockUpdate(target, mb, time.Millisecond*100)
 	}
 	tx.SetBlock(pushPos, PistonArmCollision{Facing: p.Facing, Sticky: false}, nil)
+
+	for _, v := range tx.Viewers(pos.Vec3()) {
+		v.ViewBlockAction(pos, MovingAction{})
+	}
 	return true
 }
 
@@ -92,6 +100,9 @@ func (p Piston) extend(pos cube.Pos, tx *world.Tx) bool {
 func (p Piston) retract(pos cube.Pos, tx *world.Tx) {
 	armPos := pos.Side(p.Facing)
 	tx.SetBlock(armPos, Air{}, nil)
+	for _, v := range tx.Viewers(pos.Vec3()) {
+		v.ViewBlockAction(pos, MovingAction{})
+	}
 }
 
 // isImmovable returns true if the block cannot be pushed.
