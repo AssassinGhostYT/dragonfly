@@ -99,7 +99,9 @@ func init() {
 	world.RegisterBlock(RawCopper{})
 	world.RegisterBlock(RawGold{})
 	world.RegisterBlock(RawIron{})
-	world.RegisterBlock(RedstoneBlock{})
+	if _, ok := world.BlockByName("minecraft:redstone_block", nil); !ok {
+		world.RegisterBlock(RedstoneBlock{})
+	}
 	world.RegisterBlock(ReinforcedDeepslate{})
 	world.RegisterBlock(ResinBricks{Chiseled: true})
 	world.RegisterBlock(ResinBricks{})
@@ -109,7 +111,9 @@ func init() {
 	world.RegisterBlock(SeaLantern{})
 	world.RegisterBlock(Shroomlight{})
 	world.RegisterBlock(Slime{})
-	world.RegisterBlock(MovingBlock{MovingBlock: Air{}})
+	if _, ok := world.BlockByName("minecraft:moving_block", nil); !ok {
+		world.RegisterBlock(MovingBlock{MovingBlock: Air{}})
+	}
 	world.RegisterBlock(SmithingTable{})
 	world.RegisterBlock(SmoothBasalt{})
 	world.RegisterBlock(Snow{})
@@ -532,6 +536,9 @@ func init() {
 
 func registerAll(blocks []world.Block) {
 	for _, b := range blocks {
-		world.RegisterBlock(b)
+		name, props := b.EncodeBlock()
+		if _, ok := world.BlockByName(name, props); !ok {
+			world.RegisterBlock(b)
+		}
 	}
 }
