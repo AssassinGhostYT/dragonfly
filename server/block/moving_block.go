@@ -39,10 +39,10 @@ func (m MovingBlock) Model() world.BlockModel {
 func (m MovingBlock) EncodeNBT() map[string]any {
 	name, properties := m.MovingBlock.EncodeBlock()
 	return map[string]any{
-		"id":                "PistonArm",
-		"movingBlock":       map[string]any{"name": name, "states": properties},
-		"facing_direction":  int32(m.Facing),
-		"extending":         m.Extending,
+		"id":               "PistonArm",
+		"movingBlock":      map[string]any{"name": name, "states": properties},
+		"facing_direction": int32(m.Facing),
+		"extending":        m.Extending,
 	}
 }
 
