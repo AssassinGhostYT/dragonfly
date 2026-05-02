@@ -147,9 +147,7 @@ func (p StickyPiston) EncodeBlock() (string, map[string]any) {
 // allStickyPistons ...
 func allStickyPistons() (pistons []world.Block) {
 	for _, face := range cube.Faces() {
-		for _, extended := range []bool{false, true} {
-			pistons = append(pistons, StickyPiston{Facing: face, Extended: extended})
-		}
+		pistons = append(pistons, StickyPiston{Facing: face})
 	}
 	return
 }

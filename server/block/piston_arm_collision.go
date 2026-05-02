@@ -42,9 +42,8 @@ func (p PistonArmCollision) Model() world.BlockModel {
 // allPistonArms ...
 func allPistonArms() (arms []world.Block) {
 	for _, face := range cube.Faces() {
-		for _, sticky := range []bool{false, true} {
-			arms = append(arms, PistonArmCollision{Facing: face, Sticky: sticky})
-		}
+		arms = append(arms, PistonArmCollision{Facing: face, Sticky: false})
+		arms = append(arms, PistonArmCollision{Facing: face, Sticky: true})
 	}
 	return
 }
