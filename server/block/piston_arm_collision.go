@@ -27,7 +27,11 @@ func (p PistonArmCollision) EncodeItem() (name string, meta int16) {
 
 // EncodeBlock ...
 func (p PistonArmCollision) EncodeBlock() (string, map[string]any) {
-	return "minecraft:piston_arm_collision", map[string]any{"facing_direction": int32(p.Facing)}
+	name := "minecraft:piston_arm_collision"
+	if p.Sticky {
+		name = "minecraft:sticky_piston_arm_collision"
+	}
+	return name, map[string]any{"facing_direction": int32(p.Facing)}
 }
 
 // Model ...

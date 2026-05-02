@@ -141,7 +141,7 @@ func (p StickyPiston) EncodeItem() (name string, meta int16) {
 
 // EncodeBlock ...
 func (p StickyPiston) EncodeBlock() (string, map[string]any) {
-	return "minecraft:sticky_piston", map[string]any{"facing_direction": int32(p.Facing), "extended_bit": p.Extended}
+	return "minecraft:sticky_piston", map[string]any{"facing_direction": int32(p.Facing)}
 }
 
 // allStickyPistons ...
