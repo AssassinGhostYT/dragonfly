@@ -48,7 +48,6 @@ func (m MovingBlock) EncodeNBT() map[string]any {
 
 // DecodeNBT ...
 func (m MovingBlock) DecodeNBT(data map[string]any) any {
-	// We don't really need to decode this back for now as it's a transient block.
 	return m
 }
 
@@ -63,8 +62,6 @@ func (m MovingBlock) EncodeBlock() (string, map[string]any) {
 }
 
 // MovingAction is a block action used to trigger the piston animation.
-type MovingAction struct {
-	world.BlockAction
-}
+type MovingAction struct{}
 
 func (MovingAction) BlockAction() {}
