@@ -88,7 +88,7 @@ func (p StickyPiston) extend(pos cube.Pos, tx *world.Tx) bool {
 		tx.SetBlock(target, mb, nil)
 		tx.ScheduleBlockUpdate(target, mb, time.Millisecond*100)
 	}
-	tx.SetBlock(pushPos, PistonArmCollision{Facing: p.Facing, Sticky: true}, nil)
+	tx.SetBlock(pushPos, PistonHead{Facing: p.Facing, Sticky: true}, nil)
 
 	for _, v := range tx.Viewers(pos.Vec3()) {
 		v.ViewBlockAction(pos, MovingAction{})
