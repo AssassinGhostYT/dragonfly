@@ -20,21 +20,6 @@ type MovingBlock struct {
 	Extending bool
 }
 
-// ScheduledTick restores the original block after the animation ends.
-func (m MovingBlock) ScheduledTick(pos cube.Pos, tx *world.Tx, _ *rand.Rand) {
-	tx.SetBlock(pos, m.MovingBlock, nil)
-}
-
-// BreakInfo ...
-func (m MovingBlock) BreakInfo() BreakInfo {
-	return newBreakInfo(0, alwaysHarvestable, nothingEffective, nil)
-}
-
-// Model ...
-func (m MovingBlock) Model() world.BlockModel {
-	return model.Empty{}
-}
-
 // EncodeNBT ...
 func (m MovingBlock) EncodeNBT() map[string]any {
 	name, properties := m.MovingBlock.EncodeBlock()
@@ -49,6 +34,21 @@ func (m MovingBlock) EncodeNBT() map[string]any {
 // DecodeNBT ...
 func (m MovingBlock) DecodeNBT(data map[string]any) any {
 	return m
+}
+
+// ScheduledTick restores the original block after the animation ends.
+func (m MovingBlock) ScheduledTick(pos cube.Pos, tx *world.Tx, _ *rand.Rand) {
+	tx.SetBlock(pos, m.MovingBlock, nil)
+}
+
+// BreakInfo ...
+func (m MovingBlock) BreakInfo() BreakInfo {
+	return newBreakInfo(0, alwaysHarvestable, nothingEffective, nil)
+}
+
+// Model ...
+func (m MovingBlock) Model() world.BlockModel {
+	return model.Empty{}
 }
 
 // EncodeItem ...

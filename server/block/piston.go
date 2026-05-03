@@ -21,7 +21,7 @@ type Piston struct {
 
 // BreakInfo ...
 func (p Piston) BreakInfo() BreakInfo {
-	return newBreakInfo(0.5, alwaysHarvestable, nothingEffective, oneOf(p))
+	return newBreakInfo(0.5, alwaysHarvestable, pickaxeEffective, oneOf(p))
 }
 
 // UseOnBlock ...
@@ -30,7 +30,7 @@ func (p Piston) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *world
 	if !used {
 		return
 	}
-	p.Facing = user.Rotation().Direction().Face().Opposite()
+	p.Facing = calculateFace(user, pos)
 
 	place(tx, pos, p, user, ctx)
 	return placed(ctx)
@@ -88,7 +88,7 @@ func (p Piston) extend(pos cube.Pos, tx *world.Tx) bool {
 		tx.SetBlock(target, mb, nil)
 		tx.ScheduleBlockUpdate(target, mb, time.Millisecond*100)
 	}
-	tx.SetBlock(pushPos, PistonArmCollision{Facing: p.Facing, Sticky: false}, nil)
+	tx.SetBlock(pushPos, PistonHead{Facing: p.Facing, Sticky: false}, nil)
 
 	for _, v := range tx.Viewers(pos.Vec3()) {
 		v.ViewBlockAction(pos, MovingAction{})
@@ -114,14 +114,9 @@ func (p Piston) isImmovable(b world.Block) bool {
 	return false
 }
 
-// isPowered checks if the piston is powered by an adjacent redstone block.
+// isPowered checks if the piston is powered by an adjacent redstone source.
 func (p Piston) isPowered(pos cube.Pos, tx *world.Tx) bool {
-	for _, face := range cube.Faces() {
-		if _, ok := tx.Block(pos.Side(face)).(RedstoneBlock); ok {
-			return true
-		}
-	}
-	return false
+	return receivedPower(pos, tx) > 0
 }
 
 // EncodeItem ...
@@ -131,13 +126,14 @@ func (p Piston) EncodeItem() (name string, meta int16) {
 
 // EncodeBlock ...
 func (p Piston) EncodeBlock() (string, map[string]any) {
-	return "minecraft:piston", map[string]any{"facing_direction": int32(p.Facing)}
+	return "minecraft:piston", map[string]any{"facing_direction": int32(p.Facing), "piston_bit": p.Extended}
 }
 
 // allPistons ...
 func allPistons() (pistons []world.Block) {
 	for _, face := range cube.Faces() {
-		pistons = append(pistons, Piston{Facing: face})
+		pistons = append(pistons, Piston{Facing: face, Extended: false})
+		pistons = append(pistons, Piston{Facing: face, Extended: true})
 	}
 	return
 }

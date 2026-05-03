@@ -21,7 +21,7 @@ type StickyPiston struct {
 
 // BreakInfo ...
 func (p StickyPiston) BreakInfo() BreakInfo {
-	return newBreakInfo(0.5, alwaysHarvestable, nothingEffective, oneOf(p))
+	return newBreakInfo(0.5, alwaysHarvestable, pickaxeEffective, oneOf(p))
 }
 
 // UseOnBlock ...
@@ -30,7 +30,7 @@ func (p StickyPiston) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx 
 	if !used {
 		return
 	}
-	p.Facing = user.Rotation().Direction().Face().Opposite()
+	p.Facing = calculateFace(user, pos)
 
 	place(tx, pos, p, user, ctx)
 	return placed(ctx)
@@ -124,14 +124,9 @@ func (p StickyPiston) isImmovable(b world.Block) bool {
 	return false
 }
 
-// isPowered checks if the piston is powered by an adjacent redstone block.
+// isPowered checks if the piston is powered by an adjacent redstone source.
 func (p StickyPiston) isPowered(pos cube.Pos, tx *world.Tx) bool {
-	for _, face := range cube.Faces() {
-		if _, ok := tx.Block(pos.Side(face)).(RedstoneBlock); ok {
-			return true
-		}
-	}
-	return false
+	return receivedPower(pos, tx) > 0
 }
 
 // EncodeItem ...
@@ -141,13 +136,14 @@ func (p StickyPiston) EncodeItem() (name string, meta int16) {
 
 // EncodeBlock ...
 func (p StickyPiston) EncodeBlock() (string, map[string]any) {
-	return "minecraft:sticky_piston", map[string]any{"facing_direction": int32(p.Facing)}
+	return "minecraft:sticky_piston", map[string]any{"facing_direction": int32(p.Facing), "piston_bit": p.Extended}
 }
 
 // allStickyPistons ...
 func allStickyPistons() (pistons []world.Block) {
 	for _, face := range cube.Faces() {
-		pistons = append(pistons, StickyPiston{Facing: face})
+		pistons = append(pistons, StickyPiston{Facing: face, Extended: false})
+		pistons = append(pistons, StickyPiston{Facing: face, Extended: true})
 	}
 	return
 }
