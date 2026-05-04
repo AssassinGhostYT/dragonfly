@@ -147,7 +147,7 @@ const (
 	hashPackedMud
 	hashPinkPetals
 	hashPiston
-	hashPistonHead
+	hashPistonArmCollision
 	hashPlanks
 	hashPodzol
 	hashPolishedBlackstoneBrick
@@ -789,11 +789,11 @@ func (p PinkPetals) Hash() (uint64, uint64) {
 }
 
 func (p Piston) Hash() (uint64, uint64) {
-	return hashPiston, uint64(p.Facing) | uint64(boolByte(p.Extended))<<3
+	return hashPiston, uint64(p.Facing)
 }
 
-func (p PistonHead) Hash() (uint64, uint64) {
-	return hashPistonHead, uint64(p.Facing) | uint64(boolByte(p.Sticky))<<3
+func (p PistonArmCollision) Hash() (uint64, uint64) {
+	return hashPistonArmCollision, uint64(p.Facing) | uint64(boolByte(p.Sticky))<<3
 }
 
 func (p Planks) Hash() (uint64, uint64) {
@@ -969,7 +969,7 @@ func (s Stairs) Hash() (uint64, uint64) {
 }
 
 func (p StickyPiston) Hash() (uint64, uint64) {
-	return hashStickyPiston, uint64(p.Facing) | uint64(boolByte(p.Extended))<<3
+	return hashStickyPiston, uint64(p.Facing)
 }
 
 func (s Stone) Hash() (uint64, uint64) {
