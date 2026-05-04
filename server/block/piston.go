@@ -15,8 +15,6 @@ type Piston struct {
 
 	// Facing is the direction the piston faces.
 	Facing cube.Face
-	// Extended is true if the piston is currently extended.
-	Extended bool
 }
 
 // BreakInfo ...
@@ -38,18 +36,13 @@ func (p Piston) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *world
 
 // NeighbourUpdateTick ...
 func (p Piston) NeighbourUpdateTick(pos, _ cube.Pos, tx *world.Tx) {
-	if p.Extended {
-		if !p.isPowered(pos, tx) {
-			p.Extended = false
-			tx.SetBlock(pos, p, nil)
-			p.retract(pos, tx)
-		}
-		return
-	}
 	if p.isPowered(pos, tx) {
-		if p.extend(pos, tx) {
-			p.Extended = true
-			tx.SetBlock(pos, p, nil)
+		if !p.neighbouringArm(pos, tx) {
+			p.extend(pos, tx)
+		}
+	} else {
+		if p.neighbouringArm(pos, tx) {
+			p.retract(pos, tx)
 		}
 	}
 }
@@ -105,6 +98,15 @@ func (p Piston) retract(pos cube.Pos, tx *world.Tx) {
 	}
 }
 
+// neighbouringArm returns true if a piston arm is present in front of the piston.
+func (p Piston) neighbouringArm(pos cube.Pos, tx *world.Tx) bool {
+	side := pos.Side(p.Facing)
+	if arm, ok := tx.Block(side).(PistonArmCollision); ok {
+		return arm.Facing == p.Facing
+	}
+	return false
+}
+
 // isImmovable returns true if the block cannot be pushed.
 func (p Piston) isImmovable(b world.Block) bool {
 	switch b.(type) {
@@ -132,8 +134,7 @@ func (p Piston) EncodeBlock() (string, map[string]any) {
 // allPistons ...
 func allPistons() (pistons []world.Block) {
 	for _, face := range cube.Faces() {
-		pistons = append(pistons, Piston{Facing: face, Extended: false})
-		pistons = append(pistons, Piston{Facing: face, Extended: true})
+		pistons = append(pistons, Piston{Facing: face})
 	}
 	return
 }
