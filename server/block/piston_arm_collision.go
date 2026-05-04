@@ -31,9 +31,9 @@ func (p PistonArmCollision) EncodeItem() (name string, meta int16) {
 // EncodeBlock ...
 func (p PistonArmCollision) EncodeBlock() (string, map[string]any) {
 	if p.Sticky {
-		return "minecraft:sticky_piston_arm_collision", map[string]any{"facing_direction": int32(p.Facing)}
+		return "minecraft:sticky_piston_arm_collision", map[string]any{"facing_direction": pistonFace(p.Facing)}
 	}
-	return "minecraft:piston_arm_collision", map[string]any{"facing_direction": int32(p.Facing)}
+	return "minecraft:piston_arm_collision", map[string]any{"facing_direction": pistonFace(p.Facing)}
 }
 
 // Model ...

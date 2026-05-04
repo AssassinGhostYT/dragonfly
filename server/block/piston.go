@@ -129,7 +129,20 @@ func (p Piston) EncodeItem() (name string, meta int16) {
 
 // EncodeBlock ...
 func (p Piston) EncodeBlock() (string, map[string]any) {
-	return "minecraft:piston", map[string]any{"facing_direction": int32(p.Facing)}
+	return "minecraft:piston", map[string]any{"facing_direction": pistonFace(p.Facing)}
+}
+
+// EncodeNBT ...
+func (p Piston) EncodeNBT() map[string]any {
+	return map[string]any{
+		"id":    "PistonArm",
+		"state": uint8(2), // Always report 'Extended' if it's in the world entity map.
+	}
+}
+
+// DecodeNBT ...
+func (p Piston) DecodeNBT(data map[string]any) any {
+	return p
 }
 
 // allPistons ...
