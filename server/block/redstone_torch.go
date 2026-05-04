@@ -86,8 +86,6 @@ func (t RedstoneTorch) NeighbourUpdateTick(pos, _ cube.Pos, tx *world.Tx) {
 	if lit != t.Lit {
 		t.Lit = lit
 		tx.SetBlock(pos, t, nil)
-		// Update neighbors because the power state changed.
-		updateNeighbours(pos, tx)
 	}
 }
 
