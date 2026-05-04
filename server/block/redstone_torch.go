@@ -104,7 +104,12 @@ func (t RedstoneTorch) EncodeBlock() (name string, properties map[string]any) {
 	default:
 		face = t.Facing.String()
 	}
-	return "minecraft:redstone_torch", map[string]any{"torch_facing_direction": face}
+
+	name = "minecraft:redstone_torch"
+	if !t.Lit {
+		name = "minecraft:unlit_redstone_torch"
+	}
+	return name, map[string]any{"torch_facing_direction": face}
 }
 
 // allRedstoneTorches ...
