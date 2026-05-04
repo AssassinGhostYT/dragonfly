@@ -865,7 +865,7 @@ func (RedstoneBlock) Hash() (uint64, uint64) {
 }
 
 func (t RedstoneTorch) Hash() (uint64, uint64) {
-	return hashRedstoneTorch, uint64(t.Facing)
+	return hashRedstoneTorch, uint64(t.Facing) | uint64(boolByte(t.Lit))<<3
 }
 
 func (ReinforcedDeepslate) Hash() (uint64, uint64) {
