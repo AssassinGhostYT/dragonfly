@@ -41,11 +41,6 @@ func (p PistonArmCollision) Model() world.BlockModel {
 	return model.Empty{}
 }
 
-// Hash ...
-func (p PistonArmCollision) Hash() (uint64, uint64) {
-	return 0, 0
-}
-
 // allPistonArms ...
 func allPistonArms() (arms []world.Block) {
 	for _, face := range cube.Faces() {
