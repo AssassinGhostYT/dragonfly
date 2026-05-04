@@ -12,7 +12,7 @@ type RedstoneTorch struct {
 	transparent
 	empty
 
-	// Facing is the direction from the torch to the block.
+	// Facing is the direction from the torch to the block it is attached to.
 	Facing cube.Face
 	// Lit is true if the torch is lit.
 	Lit bool
@@ -20,7 +20,7 @@ type RedstoneTorch struct {
 
 // BreakInfo ...
 func (t RedstoneTorch) BreakInfo() BreakInfo {
-	return newBreakInfo(0, alwaysHarvestable, nothingEffective, oneOf(t))
+	return newBreakInfo(0, alwaysHarvestable, nothingEffective, oneOf(RedstoneTorch{Lit: true}))
 }
 
 // LightEmissionLevel ...
@@ -33,7 +33,7 @@ func (t RedstoneTorch) LightEmissionLevel() uint8 {
 
 // WeakPower ...
 func (t RedstoneTorch) WeakPower(pos cube.Pos, face cube.Face, tx *world.Tx) int {
-	if t.Lit {
+	if t.Lit && t.Facing != face {
 		return 15
 	}
 	return 0
@@ -41,7 +41,7 @@ func (t RedstoneTorch) WeakPower(pos cube.Pos, face cube.Face, tx *world.Tx) int
 
 // StrongPower ...
 func (t RedstoneTorch) StrongPower(pos cube.Pos, face cube.Face, tx *world.Tx) int {
-	if t.Lit && t.Facing == face {
+	if t.Lit && t.Facing == cube.FaceDown && face == cube.FaceUp {
 		return 15
 	}
 	return 0
@@ -70,7 +70,7 @@ func (t RedstoneTorch) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx
 		}
 	}
 	t.Facing = face.Opposite()
-	t.Lit = true
+	t.Lit = receivedPower(pos.Side(t.Facing), tx) == 0
 
 	place(tx, pos, t, user, ctx)
 	return placed(ctx)
@@ -80,6 +80,14 @@ func (t RedstoneTorch) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx
 func (t RedstoneTorch) NeighbourUpdateTick(pos, _ cube.Pos, tx *world.Tx) {
 	if !tx.Block(pos.Side(t.Facing)).Model().FaceSolid(pos.Side(t.Facing), t.Facing.Opposite(), tx) {
 		breakBlock(t, pos, tx)
+		return
+	}
+	lit := receivedPower(pos.Side(t.Facing), tx) == 0
+	if lit != t.Lit {
+		t.Lit = lit
+		tx.SetBlock(pos, t, nil)
+		// Update neighbors because the power state changed.
+		updateNeighbours(pos, tx)
 	}
 }
 

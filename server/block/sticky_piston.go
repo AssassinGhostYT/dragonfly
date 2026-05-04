@@ -28,7 +28,8 @@ func (p StickyPiston) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx 
 	if !used {
 		return
 	}
-	p.Facing = calculateFace(user, pos)
+	// Piston faces the direction the player is looking (away from the player).
+	p.Facing = user.Rotation().Direction().Face()
 
 	place(tx, pos, p, user, ctx)
 	return placed(ctx)

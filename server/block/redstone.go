@@ -28,3 +28,11 @@ func receivedPower(pos cube.Pos, tx *world.Tx) int {
 	}
 	return max
 }
+
+// isEnergized checks if a block is receiving a "strong" signal that would power its neighbors.
+// This is used for redstone torches and blocks that need to transmit power through themselves.
+func isEnergized(pos cube.Pos, tx *world.Tx) bool {
+	// For now, let's keep it simple: if it's receiving power from any side.
+	// In the future, we'll distinguish between block power and wire power.
+	return receivedPower(pos, tx) > 0
+}
