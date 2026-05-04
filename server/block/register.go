@@ -91,7 +91,7 @@ func init() {
 	world.RegisterBlock(PackedMud{})
 	registerAll(allPistons())
 	registerAll(allStickyPistons())
-	registerAll(allPistonHeads())
+	registerAll(allPistonArms())
 	world.RegisterBlock(Podzol{})
 	world.RegisterBlock(PolishedBlackstoneBrick{Cracked: true})
 	world.RegisterBlock(PolishedBlackstoneBrick{})

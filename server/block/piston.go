@@ -88,7 +88,7 @@ func (p Piston) extend(pos cube.Pos, tx *world.Tx) bool {
 		tx.SetBlock(target, mb, nil)
 		tx.ScheduleBlockUpdate(target, mb, time.Millisecond*100)
 	}
-	tx.SetBlock(pushPos, PistonHead{Facing: p.Facing, Sticky: false}, nil)
+	tx.SetBlock(pushPos, PistonArmCollision{Facing: p.Facing, Sticky: false}, nil)
 
 	for _, v := range tx.Viewers(pos.Vec3()) {
 		v.ViewBlockAction(pos, MovingAction{})
@@ -126,7 +126,7 @@ func (p Piston) EncodeItem() (name string, meta int16) {
 
 // EncodeBlock ...
 func (p Piston) EncodeBlock() (string, map[string]any) {
-	return "minecraft:piston", map[string]any{"facing_direction": int32(p.Facing), "piston_bit": p.Extended}
+	return "minecraft:piston", map[string]any{"facing_direction": int32(p.Facing)}
 }
 
 // allPistons ...
