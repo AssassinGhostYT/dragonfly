@@ -61,11 +61,6 @@ func (m MovingBlock) EncodeBlock() (string, map[string]any) {
 	return "minecraft:moving_block", nil
 }
 
-// Hash ...
-func (m MovingBlock) Hash() (uint64, uint64) {
-	return hashMovingBlock, 0
-}
-
 // MovingAction is a block action used to trigger the piston animation.
 type MovingAction struct{}
 

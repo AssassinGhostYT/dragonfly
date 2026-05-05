@@ -64,11 +64,6 @@ func (r RedstoneDust) StrongPower(cube.Pos, cube.Face, *world.Tx) int {
 	return 0
 }
 
-// Hash ...
-func (r RedstoneDust) Hash() (uint64, uint64) {
-	return hashRedstoneDust, uint64(r.Power)
-}
-
 // allRedstoneDust ...
 func allRedstoneDust() (dust []world.Block) {
 	for i := 0; i < 16; i++ {
