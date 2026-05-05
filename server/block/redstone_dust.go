@@ -2,6 +2,7 @@ package block
 
 import (
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/block/model"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
@@ -99,8 +100,8 @@ func (r RedstoneDust) calculatePower(pos cube.Pos, tx *world.Tx) int {
 		}
 		
 		// Check for power through blocks (only if the neighbor is solid)
-		if _, ok := b.(solid); ok {
-			// This is simplified. Real redstone dust propagation is very complex.
+		if _, ok := b.Model().(model.Solid); ok {
+			// Redstone propagation through blocks could be implemented here.
 		}
 	}
 	return maxPower
