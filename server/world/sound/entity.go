@@ -58,3 +58,15 @@ type FireworkBlast struct{ sound }
 
 // FireworkTwinkle is a sound played when a firework explodes and should twinkle.
 type FireworkTwinkle struct{ sound }
+
+// SilverfishAmbient is a sound played randomly by a silverfish.
+type SilverfishAmbient struct{ sound }
+
+// SilverfishHurt is a sound played when a silverfish is hurt.
+type SilverfishHurt struct{ sound }
+
+// SilverfishDeath is a sound played when a silverfish dies.
+type SilverfishDeath struct{ sound }
+
+// SilverfishStep is a sound played when a silverfish walks.
+type SilverfishStep struct{ sound }
