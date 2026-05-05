@@ -16,10 +16,8 @@ require (
 	golang.org/x/mod v0.22.0
 	golang.org/x/text v0.23.0
 	golang.org/x/tools v0.28.0
-	github.com/AssassinGhostYT/MobsX-MC v0.0.0
+	github.com/AssassinGhostYT/MobsX-MC v0.0.0-20260505051052-bfc425a1e742
 )
-
-replace github.com/AssassinGhostYT/MobsX-MC => ../mobsx-mc
 
 require (
 	github.com/coreos/go-oidc/v3 v3.17.0 // indirect
