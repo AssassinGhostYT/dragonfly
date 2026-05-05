@@ -104,6 +104,7 @@ func (conf Config) New() *World {
 		conf:             conf,
 		ra:               conf.Dim.Range(),
 		set:              s,
+		redstone:         NewRedstone(),
 	}
 	w.weather = weather{w: w}
 	var h Handler = NopHandler{}

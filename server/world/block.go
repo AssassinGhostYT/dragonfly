@@ -81,12 +81,12 @@ type Liquid interface {
 
 // Conductor represents a block that is capable of conducting redstone power.
 type Conductor interface {
-	// Source returns true if the block is a redstone power source.
-	Source() bool
+	// RedstoneSource returns true if the block is a redstone power source.
+	RedstoneSource() bool
 	// WeakPower returns the weak redstone power level emitted by the block.
-	WeakPower(pos cube.Pos, face cube.Face, tx *Tx) int
+	WeakPower(pos cube.Pos, face cube.Face, tx *Tx, accountForDust bool) int
 	// StrongPower returns the strong redstone power level emitted by the block.
-	StrongPower(pos cube.Pos, face cube.Face, tx *Tx) int
+	StrongPower(pos cube.Pos, face cube.Face, tx *Tx, accountForDust bool) int
 }
 
 // hashes holds a list of runtime IDs indexed by the hash of the Block that implements the blocks pointed to by those

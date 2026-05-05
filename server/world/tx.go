@@ -19,6 +19,26 @@ type Tx struct {
 	closed bool
 }
 
+// RedstonePower returns the redstone power level at the provided position and face.
+func (tx *Tx) RedstonePower(pos cube.Pos, face cube.Face, accountForDust bool) int {
+	var power int
+	for _, f := range cube.Faces() {
+		b := tx.Block(pos.Side(f))
+		if c, ok := b.(Conductor); ok {
+			p := c.WeakPower(pos.Side(f), f.Opposite(), tx, accountForDust)
+			if p > power {
+				power = p
+			}
+		}
+	}
+	return power
+}
+
+// Redstone returns the world's redstone controller.
+func (tx *Tx) Redstone() *Redstone {
+	return tx.w.redstone
+}
+
 // Range returns the lower and upper bounds of the World that the Tx is
 // operating on.
 func (tx *Tx) Range() cube.Range {

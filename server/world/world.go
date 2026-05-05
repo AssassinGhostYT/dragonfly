@@ -45,6 +45,8 @@ type World struct {
 
 	weather
 
+	redstone *Redstone
+
 	closing chan struct{}
 	running sync.WaitGroup
 
