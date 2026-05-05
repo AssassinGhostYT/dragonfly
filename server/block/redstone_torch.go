@@ -2,11 +2,10 @@ package block
 
 import (
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/block/model"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
-	"math/rand"
-	"time"
 )
 
 // RedstoneTorch is a non-solid blocks that emits little light and also a full-strength redstone signal when lit.
@@ -54,7 +53,7 @@ func (t RedstoneTorch) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx
 func (t RedstoneTorch) isLit(pos cube.Pos, tx *world.Tx) bool {
 	supportPos := pos.Side(t.Facing)
 	support := tx.Block(supportPos)
-	if _, ok := support.(solid); ok {
+	if _, ok := support.Model().(model.Solid); ok {
 		// Zig-zag logic: Redstone torches turn off if their support block is powered.
 		return receivedPower(supportPos, tx) == 0
 	}
