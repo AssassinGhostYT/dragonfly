@@ -35,22 +35,6 @@ func (m MovingBlock) Model() world.BlockModel {
 	return model.Empty{}
 }
 
-// EncodeNBT ...
-func (m MovingBlock) EncodeNBT() map[string]any {
-	name, properties := m.MovingBlock.EncodeBlock()
-	return map[string]any{
-		"id":               "PistonArm",
-		"movingBlock":      map[string]any{"name": name, "states": properties},
-		"facing_direction": int32(m.Facing),
-		"extending":        m.Extending,
-	}
-}
-
-// DecodeNBT ...
-func (m MovingBlock) DecodeNBT(data map[string]any) any {
-	return m
-}
-
 // EncodeItem ...
 func (m MovingBlock) EncodeItem() (name string, meta int16) {
 	return "minecraft:moving_block", 0
@@ -59,6 +43,22 @@ func (m MovingBlock) EncodeItem() (name string, meta int16) {
 // EncodeBlock ...
 func (m MovingBlock) EncodeBlock() (string, map[string]any) {
 	return "minecraft:moving_block", nil
+}
+
+// EncodeNBT ...
+func (m MovingBlock) EncodeNBT() map[string]any {
+	name, properties := m.MovingBlock.EncodeBlock()
+	return map[string]any{
+		"id":               "PistonArm",
+		"movingBlock":      map[string]any{"name": name, "states": properties},
+		"facing_direction": pistonFace(m.Facing),
+		"extending":        m.Extending,
+	}
+}
+
+// DecodeNBT ...
+func (m MovingBlock) DecodeNBT(data map[string]any) any {
+	return m
 }
 
 // MovingAction is a block action used to trigger the piston animation.

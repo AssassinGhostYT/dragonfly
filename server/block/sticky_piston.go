@@ -2,8 +2,10 @@ package block
 
 import (
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/internal/nbtconv"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
+	"github.com/df-mc/dragonfly/server/world/sound"
 	"github.com/go-gl/mathgl/mgl64"
 	"time"
 )
@@ -21,7 +23,7 @@ type StickyPiston struct {
 
 // BreakInfo ...
 func (p StickyPiston) BreakInfo() BreakInfo {
-	return newBreakInfo(0.5, alwaysHarvestable, nothingEffective, oneOf(p))
+	return newBreakInfo(1.5, alwaysHarvestable, pickaxeEffective, oneOf(p))
 }
 
 // UseOnBlock ...
@@ -30,7 +32,8 @@ func (p StickyPiston) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx 
 	if !used {
 		return
 	}
-	p.Facing = user.Rotation().Direction().Face().Opposite()
+	// Pistons face towards the player when placed.
+	p.Facing = calculateFace(user, pos)
 
 	place(tx, pos, p, user, ctx)
 	return placed(ctx)
@@ -38,18 +41,21 @@ func (p StickyPiston) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx 
 
 // NeighbourUpdateTick ...
 func (p StickyPiston) NeighbourUpdateTick(pos, _ cube.Pos, tx *world.Tx) {
-	if p.Extended {
-		if !p.isPowered(pos, tx) {
+	powered := receivedPower(pos, tx) > 0
+	if powered {
+		if !p.Extended {
+			if p.extend(pos, tx) {
+				p.Extended = true
+				tx.SetBlock(pos, p, nil)
+				tx.PlaySound(pos.Vec3(), sound.PistonExtend{})
+			}
+		}
+	} else {
+		if p.Extended {
 			p.Extended = false
 			tx.SetBlock(pos, p, nil)
 			p.retract(pos, tx)
-		}
-		return
-	}
-	if p.isPowered(pos, tx) {
-		if p.extend(pos, tx) {
-			p.Extended = true
-			tx.SetBlock(pos, p, nil)
+			tx.PlaySound(pos.Vec3(), sound.PistonRetract{})
 		}
 	}
 }
@@ -96,18 +102,23 @@ func (p StickyPiston) extend(pos cube.Pos, tx *world.Tx) bool {
 	return true
 }
 
-// retract handles the retraction of the piston.
+// retract handles the retraction of the piston, pulling the block in front.
 func (p StickyPiston) retract(pos cube.Pos, tx *world.Tx) {
 	armPos := pos.Side(p.Facing)
-	tx.SetBlock(armPos, Air{}, nil)
+	if _, ok := tx.Block(armPos).(PistonArmCollision); ok {
+		tx.SetBlock(armPos, Air{}, nil)
+	}
 
 	pullPos := armPos.Side(p.Facing)
 	b := tx.Block(pullPos)
-	if !p.isImmovable(b) && len(b.Model().BBox(pullPos, tx)) > 0 {
-		mb := MovingBlock{MovingBlock: b, Facing: p.Facing.Opposite(), Extending: false}
-		tx.SetBlock(armPos, mb, nil)
-		tx.ScheduleBlockUpdate(armPos, mb, time.Millisecond*100)
-		tx.SetBlock(pullPos, Air{}, nil)
+	if !p.isImmovable(b) {
+		if _, ok := b.(Air); !ok {
+			// Move the block to the arm position.
+			mb := MovingBlock{MovingBlock: b, Facing: p.Facing.Opposite(), Extending: false}
+			tx.SetBlock(armPos, mb, nil)
+			tx.ScheduleBlockUpdate(armPos, mb, time.Millisecond*100)
+			tx.SetBlock(pullPos, Air{}, nil)
+		}
 	}
 
 	for _, v := range tx.Viewers(pos.Vec3()) {
@@ -118,18 +129,8 @@ func (p StickyPiston) retract(pos cube.Pos, tx *world.Tx) {
 // isImmovable returns true if the block cannot be pushed.
 func (p StickyPiston) isImmovable(b world.Block) bool {
 	switch b.(type) {
-	case Bedrock, Obsidian, InvisibleBedrock, Barrier, Water, Lava:
+	case Bedrock, Obsidian, InvisibleBedrock, Barrier, Water, Lava, PistonArmCollision:
 		return true
-	}
-	return false
-}
-
-// isPowered checks if the piston is powered by an adjacent redstone block.
-func (p StickyPiston) isPowered(pos cube.Pos, tx *world.Tx) bool {
-	for _, face := range cube.Faces() {
-		if _, ok := tx.Block(pos.Side(face)).(RedstoneBlock); ok {
-			return true
-		}
 	}
 	return false
 }
@@ -141,7 +142,26 @@ func (p StickyPiston) EncodeItem() (name string, meta int16) {
 
 // EncodeBlock ...
 func (p StickyPiston) EncodeBlock() (string, map[string]any) {
-	return "minecraft:sticky_piston", map[string]any{"facing_direction": int32(p.Facing)}
+	return "minecraft:sticky_piston", map[string]any{"facing_direction": pistonFace(p.Facing)}
+}
+
+// EncodeNBT ...
+func (p StickyPiston) EncodeNBT() map[string]any {
+	state := uint8(0)
+	if p.Extended {
+		state = 2
+	}
+	return map[string]any{
+		"id":     "PistonArm",
+		"state":  state,
+		"sticky": uint8(1),
+	}
+}
+
+// DecodeNBT ...
+func (p StickyPiston) DecodeNBT(data map[string]any) any {
+	p.Extended = nbtconv.Uint8(data, "state") == 2
+	return p
 }
 
 // allStickyPistons ...

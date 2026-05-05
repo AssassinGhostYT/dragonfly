@@ -41,6 +41,7 @@ func (r RedstoneDust) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx 
 		return false
 	}
 
+	r.Power = r.calculatePower(pos, tx)
 	place(tx, pos, r, user, ctx)
 	return placed(ctx)
 }
@@ -51,17 +52,58 @@ func (r RedstoneDust) NeighbourUpdateTick(pos, _ cube.Pos, tx *world.Tx) {
 		breakBlock(r, pos, tx)
 		return
 	}
-	// TODO: Implement complex redstone wire power propagation logic.
+	
+	newPower := r.calculatePower(pos, tx)
+	if newPower != r.Power {
+		r.Power = newPower
+		tx.SetBlock(pos, r, nil)
+	}
 }
 
 // WeakPower ...
-func (r RedstoneDust) WeakPower(cube.Pos, cube.Face, *world.Tx) int {
+func (r RedstoneDust) WeakPower(pos cube.Pos, face cube.Face, tx *world.Tx) int {
+	if face == cube.FaceUp {
+		return r.Power
+	}
+	if face == cube.FaceDown {
+		return 0
+	}
 	return r.Power
 }
 
 // StrongPower ...
-func (r RedstoneDust) StrongPower(cube.Pos, cube.Face, *world.Tx) int {
-	return 0
+func (r RedstoneDust) StrongPower(pos cube.Pos, face cube.Face, tx *world.Tx) int {
+	return r.WeakPower(pos, face, tx)
+}
+
+// calculatePower returns the highest level of received redstone power at the provided position.
+func (r RedstoneDust) calculatePower(pos cube.Pos, tx *world.Tx) int {
+	var maxPower int
+	for _, face := range cube.Faces() {
+		sidePos := pos.Side(face)
+		b := tx.Block(sidePos)
+		
+		// Check for direct sources
+		if c, ok := b.(world.Conductor); ok {
+			p := c.WeakPower(sidePos, face.Opposite(), tx)
+			if p > maxPower {
+				maxPower = p
+			}
+		}
+
+		// Check for wire propagation
+		if wire, ok := b.(RedstoneDust); ok {
+			if wire.Power-1 > maxPower {
+				maxPower = wire.Power - 1
+			}
+		}
+		
+		// Check for power through blocks (only if the neighbor is solid)
+		if _, ok := b.(solid); ok {
+			// This is simplified. Real redstone dust propagation is very complex.
+		}
+	}
+	return maxPower
 }
 
 // allRedstoneDust ...
