@@ -5,22 +5,19 @@ import (
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
+	"math/rand"
+	"time"
 )
 
-// RedstoneTorch is a non-solid block that emits redstone power.
+// RedstoneTorch is a non-solid blocks that emits little light and also a full-strength redstone signal when lit.
 type RedstoneTorch struct {
 	transparent
 	empty
 
-	// Facing is the direction from the torch to the block it is attached to.
+	// Facing is the direction from the torch to the block.
 	Facing cube.Face
-	// Lit is true if the torch is lit.
+	// Lit is if the redstone torch is lit and emitting power.
 	Lit bool
-}
-
-// BreakInfo ...
-func (t RedstoneTorch) BreakInfo() BreakInfo {
-	return newBreakInfo(0, alwaysHarvestable, nothingEffective, oneOf(RedstoneTorch{Lit: true}))
 }
 
 // LightEmissionLevel ...
@@ -31,20 +28,9 @@ func (t RedstoneTorch) LightEmissionLevel() uint8 {
 	return 0
 }
 
-// WeakPower ...
-func (t RedstoneTorch) WeakPower(pos cube.Pos, face cube.Face, tx *world.Tx) int {
-	if t.Lit && t.Facing != face {
-		return 15
-	}
-	return 0
-}
-
-// StrongPower ...
-func (t RedstoneTorch) StrongPower(pos cube.Pos, face cube.Face, tx *world.Tx) int {
-	if t.Lit && t.Facing == cube.FaceDown && face == cube.FaceUp {
-		return 15
-	}
-	return 0
+// BreakInfo ...
+func (t RedstoneTorch) BreakInfo() BreakInfo {
+	return newBreakInfo(0, alwaysHarvestable, nothingEffective, oneOf(t))
 }
 
 // UseOnBlock ...
@@ -56,19 +42,7 @@ func (t RedstoneTorch) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx
 	if face == cube.FaceDown {
 		return false
 	}
-	if !tx.Block(pos.Side(face.Opposite())).Model().FaceSolid(pos.Side(face.Opposite()), face, tx) {
-		found := false
-		for _, i := range []cube.Face{cube.FaceSouth, cube.FaceWest, cube.FaceNorth, cube.FaceEast, cube.FaceDown} {
-			if tx.Block(pos.Side(i)).Model().FaceSolid(pos.Side(i), i.Opposite(), tx) {
-				found = true
-				face = i.Opposite()
-				break
-			}
-		}
-		if !found {
-			return false
-		}
-	}
+
 	t.Facing = face.Opposite()
 	t.Lit = t.isLit(pos, tx)
 
@@ -76,10 +50,12 @@ func (t RedstoneTorch) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx
 	return placed(ctx)
 }
 
+// isLit checks if the torch should be lit based on the power received by its support block.
 func (t RedstoneTorch) isLit(pos cube.Pos, tx *world.Tx) bool {
 	supportPos := pos.Side(t.Facing)
 	support := tx.Block(supportPos)
-	if _, ok := support.(interface{ Solid() bool }); ok {
+	if _, ok := support.(solid); ok {
+		// Zig-zag logic: Redstone torches turn off if their support block is powered.
 		return receivedPower(supportPos, tx) == 0
 	}
 	return true
@@ -98,9 +74,29 @@ func (t RedstoneTorch) NeighbourUpdateTick(pos, _ cube.Pos, tx *world.Tx) {
 	}
 }
 
-// HasLiquidDrops ...
-func (t RedstoneTorch) HasLiquidDrops() bool {
-	return true
+// Source ...
+func (t RedstoneTorch) Source() bool {
+	return t.Lit
+}
+
+// WeakPower ...
+func (t RedstoneTorch) WeakPower(_ cube.Pos, face cube.Face, _ *world.Tx) int {
+	if !t.Lit {
+		return 0
+	}
+	// Redstone torches power all blocks except the one they are attached to.
+	if face == t.Facing {
+		return 0
+	}
+	return 15
+}
+
+// StrongPower ...
+func (t RedstoneTorch) StrongPower(_ cube.Pos, face cube.Face, _ *world.Tx) int {
+	if t.Lit && face == cube.FaceDown {
+		return 15
+	}
+	return 0
 }
 
 // EncodeItem ...
@@ -109,32 +105,33 @@ func (t RedstoneTorch) EncodeItem() (name string, meta int16) {
 }
 
 // EncodeBlock ...
-func (t RedstoneTorch) EncodeBlock() (name string, properties map[string]any) {
-	var face string
-	switch t.Facing {
-	case cube.FaceDown:
-		face = "top"
-	case unknownFace:
-		face = "unknown"
-	default:
+func (t RedstoneTorch) EncodeBlock() (string, map[string]any) {
+	face := "unknown"
+	if t.Facing != unknownFace {
 		face = t.Facing.String()
+		if t.Facing == cube.FaceDown {
+			face = "top" // Attached to the floor
+		}
 	}
+	if t.Lit {
+		return "minecraft:redstone_torch", map[string]any{"torch_facing_direction": face}
+	}
+	return "minecraft:unlit_redstone_torch", map[string]any{"torch_facing_direction": face}
+}
 
-	name = "minecraft:redstone_torch"
-	if !t.Lit {
-		name = "minecraft:unlit_redstone_torch"
-	}
-	return name, map[string]any{"torch_facing_direction": face}
+// Hash ...
+func (t RedstoneTorch) Hash() (uint64, uint64) {
+	return hashRedstoneTorch, uint64(pistonFace(t.Facing)) | uint64(boolByte(t.Lit))<<3
 }
 
 // allRedstoneTorches ...
-func allRedstoneTorches() (torch []world.Block) {
-	for _, face := range cube.Faces() {
-		if face == cube.FaceUp {
-			face = unknownFace
+func allRedstoneTorches() (all []world.Block) {
+	for _, f := range append(cube.Faces(), unknownFace) {
+		if f == cube.FaceUp {
+			continue
 		}
-		torch = append(torch, RedstoneTorch{Facing: face, Lit: true})
-		torch = append(torch, RedstoneTorch{Facing: face, Lit: false})
+		all = append(all, RedstoneTorch{Facing: f, Lit: true})
+		all = append(all, RedstoneTorch{Facing: f, Lit: false})
 	}
 	return
 }

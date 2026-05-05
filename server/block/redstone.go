@@ -5,34 +5,55 @@ import (
 	"github.com/df-mc/dragonfly/server/world"
 )
 
-// redstoneSource represents a block that can provide redstone power.
-type redstoneSource interface {
-	// WeakPower returns the weak redstone power level emitted by the block in the given direction.
-	WeakPower(pos cube.Pos, face cube.Face, tx *world.Tx) int
-	// StrongPower returns the strong redstone power level emitted by the block in the given direction.
-	StrongPower(pos cube.Pos, face cube.Face, tx *world.Tx) int
-}
-
-// receivedPower returns the highest redstone power level received at the position passed.
+// receivedPower returns the highest level of redstone power received by the block at the position passed.
 func receivedPower(pos cube.Pos, tx *world.Tx) int {
-	max := 0
+	var power int
 	for _, face := range cube.Faces() {
-		side := pos.Side(face)
-		b := tx.Block(side)
-		if s, ok := b.(redstoneSource); ok {
-			p := s.WeakPower(side, face.Opposite(), tx)
-			if p > max {
-				max = p
+		sidePos := pos.Side(face)
+		b := tx.Block(sidePos)
+		if c, ok := b.(world.Conductor); ok {
+			p := c.WeakPower(sidePos, face.Opposite(), tx)
+			if p > power {
+				power = p
 			}
 		}
+		// Redstone dust and other sources might provide power through blocks.
+		// For now, we only check direct neighbors as a base.
 	}
-	return max
+	return power
 }
 
-// isEnergized checks if a block is receiving a "strong" signal that would power its neighbors.
-// This is used for redstone torches and blocks that need to transmit power through themselves.
-func isEnergized(pos cube.Pos, tx *world.Tx) bool {
-	// For now, let's keep it simple: if it's receiving power from any side.
-	// In the future, we'll distinguish between block power and wire power.
-	return receivedPower(pos, tx) > 0
+// RedstoneBlock is a block that emits a constant redstone signal.
+type RedstoneBlock struct {
+	solid
+}
+
+// Source ...
+func (RedstoneBlock) Source() bool {
+	return true
+}
+
+// WeakPower ...
+func (RedstoneBlock) WeakPower(cube.Pos, cube.Face, *world.Tx) int {
+	return 15
+}
+
+// StrongPower ...
+func (RedstoneBlock) StrongPower(cube.Pos, cube.Face, *world.Tx) int {
+	return 0
+}
+
+// EncodeItem ...
+func (RedstoneBlock) EncodeItem() (name string, meta int16) {
+	return "minecraft:redstone_block", 0
+}
+
+// EncodeBlock ...
+func (RedstoneBlock) EncodeBlock() (string, map[string]any) {
+	return "minecraft:redstone_block", nil
+}
+
+// Hash ...
+func (RedstoneBlock) Hash() (uint64, uint64) {
+	return hashRedstoneBlock, 0
 }
