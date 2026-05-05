@@ -4,6 +4,7 @@ import (
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
+	"github.com/df-mc/dragonfly/server/world/sound"
 	"github.com/go-gl/mathgl/mgl64"
 	"time"
 )
@@ -19,7 +20,7 @@ type StickyPiston struct {
 
 // BreakInfo ...
 func (p StickyPiston) BreakInfo() BreakInfo {
-	return newBreakInfo(0.5, alwaysHarvestable, pickaxeEffective, oneOf(p))
+	return newBreakInfo(1.5, alwaysHarvestable, pickaxeEffective, oneOf(p))
 }
 
 // UseOnBlock ...
@@ -28,8 +29,8 @@ func (p StickyPiston) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx 
 	if !used {
 		return
 	}
-	// Piston faces the direction the player is looking (away from the player).
-	p.Facing = user.Rotation().Direction().Face()
+	// Pistons face towards the player when placed.
+	p.Facing = calculateFace(user, pos).Opposite()
 
 	place(tx, pos, p, user, ctx)
 	return placed(ctx)
@@ -83,6 +84,7 @@ func (p StickyPiston) extend(pos cube.Pos, tx *world.Tx) bool {
 		tx.ScheduleBlockUpdate(target, mb, time.Millisecond*100)
 	}
 	tx.SetBlock(pushPos, PistonArmCollision{Facing: p.Facing, Sticky: true}, nil)
+	tx.PlaySound(pos.Vec3(), sound.PistonExtend{})
 
 	for _, v := range tx.Viewers(pos.Vec3()) {
 		v.ViewBlockAction(pos, MovingAction{})
@@ -94,6 +96,7 @@ func (p StickyPiston) extend(pos cube.Pos, tx *world.Tx) bool {
 func (p StickyPiston) retract(pos cube.Pos, tx *world.Tx) {
 	armPos := pos.Side(p.Facing)
 	tx.SetBlock(armPos, Air{}, nil)
+	tx.PlaySound(pos.Vec3(), sound.PistonRetract{})
 
 	pullPos := armPos.Side(p.Facing)
 	b := tx.Block(pullPos)
@@ -121,7 +124,7 @@ func (p StickyPiston) neighbouringArm(pos cube.Pos, tx *world.Tx) bool {
 // isImmovable returns true if the block cannot be pushed.
 func (p StickyPiston) isImmovable(b world.Block) bool {
 	switch b.(type) {
-	case Bedrock, Obsidian, InvisibleBedrock, Barrier, Water, Lava:
+	case Bedrock, Obsidian, InvisibleBedrock, Barrier, Water, Lava, PistonArmCollision:
 		return true
 	}
 	return false
@@ -144,9 +147,13 @@ func (p StickyPiston) EncodeBlock() (string, map[string]any) {
 
 // EncodeNBT ...
 func (p StickyPiston) EncodeNBT() map[string]any {
+	state := uint8(0)
+	if p.neighbouringArm(cube.Pos{}, nil) {
+		state = 2
+	}
 	return map[string]any{
 		"id":     "PistonArm",
-		"state":  uint8(2),
+		"state":  state,
 		"sticky": uint8(1),
 	}
 }

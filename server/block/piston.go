@@ -4,6 +4,7 @@ import (
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
+	"github.com/df-mc/dragonfly/server/world/sound"
 	"github.com/go-gl/mathgl/mgl64"
 	"time"
 )
@@ -19,7 +20,7 @@ type Piston struct {
 
 // BreakInfo ...
 func (p Piston) BreakInfo() BreakInfo {
-	return newBreakInfo(0.5, alwaysHarvestable, pickaxeEffective, oneOf(p))
+	return newBreakInfo(1.5, alwaysHarvestable, pickaxeEffective, oneOf(p))
 }
 
 // UseOnBlock ...
@@ -28,8 +29,8 @@ func (p Piston) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *world
 	if !used {
 		return
 	}
-	// Piston faces the direction the player is looking (away from the player).
-	p.Facing = user.Rotation().Direction().Face()
+	// Pistons face towards the player when placed.
+	p.Facing = calculateFace(user, pos).Opposite()
 
 	place(tx, pos, p, user, ctx)
 	return placed(ctx)
@@ -83,6 +84,7 @@ func (p Piston) extend(pos cube.Pos, tx *world.Tx) bool {
 		tx.ScheduleBlockUpdate(target, mb, time.Millisecond*100)
 	}
 	tx.SetBlock(pushPos, PistonArmCollision{Facing: p.Facing, Sticky: false}, nil)
+	tx.PlaySound(pos.Vec3(), sound.PistonExtend{})
 
 	for _, v := range tx.Viewers(pos.Vec3()) {
 		v.ViewBlockAction(pos, MovingAction{})
@@ -94,6 +96,8 @@ func (p Piston) extend(pos cube.Pos, tx *world.Tx) bool {
 func (p Piston) retract(pos cube.Pos, tx *world.Tx) {
 	armPos := pos.Side(p.Facing)
 	tx.SetBlock(armPos, Air{}, nil)
+	tx.PlaySound(pos.Vec3(), sound.PistonRetract{})
+
 	for _, v := range tx.Viewers(pos.Vec3()) {
 		v.ViewBlockAction(pos, MovingAction{})
 	}
@@ -111,7 +115,7 @@ func (p Piston) neighbouringArm(pos cube.Pos, tx *world.Tx) bool {
 // isImmovable returns true if the block cannot be pushed.
 func (p Piston) isImmovable(b world.Block) bool {
 	switch b.(type) {
-	case Bedrock, Obsidian, InvisibleBedrock, Barrier, Water, Lava:
+	case Bedrock, Obsidian, InvisibleBedrock, Barrier, Water, Lava, PistonArmCollision:
 		return true
 	}
 	return false
@@ -134,9 +138,13 @@ func (p Piston) EncodeBlock() (string, map[string]any) {
 
 // EncodeNBT ...
 func (p Piston) EncodeNBT() map[string]any {
+	state := uint8(0) // Retracted
+	if p.neighbouringArm(cube.Pos{}, nil) { // This will be handled by the world when calling EncodeNBT
+		state = 2 // Extended
+	}
 	return map[string]any{
 		"id":    "PistonArm",
-		"state": uint8(2), // Always report 'Extended' if it's in the world entity map.
+		"state": state,
 	}
 }
 
