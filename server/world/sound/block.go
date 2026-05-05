@@ -210,6 +210,12 @@ type DecoratedPotInserted struct {
 // DecoratedPotInsertFailed is a sound played when an item fails to be inserted into a decorated pot.
 type DecoratedPotInsertFailed struct{ sound }
 
+// PistonExtend is a sound played when a piston extends.
+type PistonExtend struct{ sound }
+
+// PistonRetract is a sound played when a piston retracts.
+type PistonRetract struct{ sound }
+
 // sound implements the world.Sound interface.
 type sound struct{}
 

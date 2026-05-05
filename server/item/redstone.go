@@ -1,7 +1,5 @@
 package item
 
-import "github.com/df-mc/dragonfly/server/world"
-
 // Redstone is an item that can be placed as redstone dust.
 type Redstone struct{}
 

@@ -2,6 +2,7 @@ package block
 
 import (
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/internal/nbtconv"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/df-mc/dragonfly/server/world/sound"
@@ -16,6 +17,8 @@ type Piston struct {
 
 	// Facing is the direction the piston faces.
 	Facing cube.Face
+	// Extended is true if the piston is currently extended.
+	Extended bool
 }
 
 // BreakInfo ...
@@ -30,7 +33,7 @@ func (p Piston) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *world
 		return
 	}
 	// Pistons face towards the player when placed.
-	p.Facing = calculateFace(user, pos).Opposite()
+	p.Facing = calculateFace(user, pos)
 
 	place(tx, pos, p, user, ctx)
 	return placed(ctx)
@@ -39,11 +42,11 @@ func (p Piston) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *world
 // NeighbourUpdateTick ...
 func (p Piston) NeighbourUpdateTick(pos, _ cube.Pos, tx *world.Tx) {
 	if p.isPowered(pos, tx) {
-		if !p.neighbouringArm(pos, tx) {
+		if !p.Extended {
 			p.extend(pos, tx)
 		}
 	} else {
-		if p.neighbouringArm(pos, tx) {
+		if p.Extended {
 			p.retract(pos, tx)
 		}
 	}
@@ -84,6 +87,9 @@ func (p Piston) extend(pos cube.Pos, tx *world.Tx) bool {
 		tx.ScheduleBlockUpdate(target, mb, time.Millisecond*100)
 	}
 	tx.SetBlock(pushPos, PistonArmCollision{Facing: p.Facing, Sticky: false}, nil)
+	
+	p.Extended = true
+	tx.SetBlock(pos, p, nil)
 	tx.PlaySound(pos.Vec3(), sound.PistonExtend{})
 
 	for _, v := range tx.Viewers(pos.Vec3()) {
@@ -96,20 +102,14 @@ func (p Piston) extend(pos cube.Pos, tx *world.Tx) bool {
 func (p Piston) retract(pos cube.Pos, tx *world.Tx) {
 	armPos := pos.Side(p.Facing)
 	tx.SetBlock(armPos, Air{}, nil)
+	
+	p.Extended = false
+	tx.SetBlock(pos, p, nil)
 	tx.PlaySound(pos.Vec3(), sound.PistonRetract{})
 
 	for _, v := range tx.Viewers(pos.Vec3()) {
 		v.ViewBlockAction(pos, MovingAction{})
 	}
-}
-
-// neighbouringArm returns true if a piston arm is present in front of the piston.
-func (p Piston) neighbouringArm(pos cube.Pos, tx *world.Tx) bool {
-	side := pos.Side(p.Facing)
-	if arm, ok := tx.Block(side).(PistonArmCollision); ok {
-		return arm.Facing == p.Facing
-	}
-	return false
 }
 
 // isImmovable returns true if the block cannot be pushed.
@@ -139,7 +139,7 @@ func (p Piston) EncodeBlock() (string, map[string]any) {
 // EncodeNBT ...
 func (p Piston) EncodeNBT() map[string]any {
 	state := uint8(0) // Retracted
-	if p.neighbouringArm(cube.Pos{}, nil) { // This will be handled by the world when calling EncodeNBT
+	if p.Extended {
 		state = 2 // Extended
 	}
 	return map[string]any{
@@ -150,6 +150,7 @@ func (p Piston) EncodeNBT() map[string]any {
 
 // DecodeNBT ...
 func (p Piston) DecodeNBT(data map[string]any) any {
+	p.Extended = nbtconv.Uint8(data, "state") == 2
 	return p
 }
 

@@ -70,10 +70,19 @@ func (t RedstoneTorch) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx
 		}
 	}
 	t.Facing = face.Opposite()
-	t.Lit = receivedPower(pos.Side(t.Facing), tx) == 0
+	t.Lit = t.isLit(pos, tx)
 
 	place(tx, pos, t, user, ctx)
 	return placed(ctx)
+}
+
+func (t RedstoneTorch) isLit(pos cube.Pos, tx *world.Tx) bool {
+	supportPos := pos.Side(t.Facing)
+	support := tx.Block(supportPos)
+	if _, ok := support.(interface{ Solid() bool }); ok {
+		return receivedPower(supportPos, tx) == 0
+	}
+	return true
 }
 
 // NeighbourUpdateTick ...
@@ -82,7 +91,7 @@ func (t RedstoneTorch) NeighbourUpdateTick(pos, _ cube.Pos, tx *world.Tx) {
 		breakBlock(t, pos, tx)
 		return
 	}
-	lit := receivedPower(pos.Side(t.Facing), tx) == 0
+	lit := t.isLit(pos, tx)
 	if lit != t.Lit {
 		t.Lit = lit
 		tx.SetBlock(pos, t, nil)

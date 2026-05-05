@@ -23,11 +23,14 @@ type MovingBlock struct {
 // EncodeNBT ...
 func (m MovingBlock) EncodeNBT() map[string]any {
 	name, properties := m.MovingBlock.EncodeBlock()
+	extending := uint8(0)
+	if m.Extending {
+		extending = 1
+	}
 	return map[string]any{
-		"id":               "PistonArm",
-		"movingBlock":      map[string]any{"name": name, "states": properties},
-		"facing_direction": int32(m.Facing),
-		"extending":        m.Extending,
+		"id":         "MovingBlock",
+		"blockState": map[string]any{"name": name, "states": properties},
+		"extending":  extending,
 	}
 }
 
