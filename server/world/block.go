@@ -79,16 +79,6 @@ type Liquid interface {
 	LiquidRemoveBlock(pos cube.Pos, tx *Tx, removed Block)
 }
 
-// Conductor represents a block that is capable of conducting redstone power.
-type Conductor interface {
-	// Source returns true if the block is a redstone power source.
-	Source() bool
-	// WeakPower returns the weak redstone power level emitted by the block.
-	WeakPower(pos cube.Pos, face cube.Face, tx *Tx) int
-	// StrongPower returns the strong redstone power level emitted by the block.
-	StrongPower(pos cube.Pos, face cube.Face, tx *Tx) int
-}
-
 // hashes holds a list of runtime IDs indexed by the hash of the Block that implements the blocks pointed to by those
 // runtime IDs. It is used to look up a block's runtime ID quickly.
 var (

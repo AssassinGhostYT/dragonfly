@@ -17,23 +17,21 @@ type PistonArmCollision struct {
 
 // BreakInfo ...
 func (p PistonArmCollision) BreakInfo() BreakInfo {
-	return newBreakInfo(0.5, alwaysHarvestable, pickaxeEffective, nil)
+	return newBreakInfo(0.5, alwaysHarvestable, nothingEffective, nil)
 }
 
 // EncodeItem ...
 func (p PistonArmCollision) EncodeItem() (name string, meta int16) {
-	if p.Sticky {
-		return "minecraft:sticky_piston_arm_collision", 0
-	}
 	return "minecraft:piston_arm_collision", 0
 }
 
 // EncodeBlock ...
 func (p PistonArmCollision) EncodeBlock() (string, map[string]any) {
+	name := "minecraft:piston_arm_collision"
 	if p.Sticky {
-		return "minecraft:sticky_piston_arm_collision", map[string]any{"facing_direction": pistonFace(p.Facing)}
+		name = "minecraft:sticky_piston_arm_collision"
 	}
-	return "minecraft:piston_arm_collision", map[string]any{"facing_direction": pistonFace(p.Facing)}
+	return name, map[string]any{"facing_direction": int32(p.Facing)}
 }
 
 // Model ...
