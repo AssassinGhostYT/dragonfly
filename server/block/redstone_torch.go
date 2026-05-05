@@ -119,6 +119,11 @@ func (t RedstoneTorch) EncodeBlock() (string, map[string]any) {
 	return "minecraft:unlit_redstone_torch", map[string]any{"torch_facing_direction": face}
 }
 
+// Hash ...
+func (t RedstoneTorch) Hash() (uint64, uint64) {
+	return hashRedstoneTorch, uint64(pistonFace(t.Facing)) | uint64(boolByte(t.Lit))<<3
+}
+
 // allRedstoneTorches ...
 func allRedstoneTorches() (all []world.Block) {
 	for _, f := range append(cube.Faces(), unknownFace) {
