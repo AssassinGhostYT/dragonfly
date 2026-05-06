@@ -19,8 +19,6 @@ require (
 	golang.org/x/tools v0.28.0
 )
 
-replace github.com/AssassinGhostYT/MobsX-MC => ../mobsx-mc
-
 require (
 	github.com/coreos/go-oidc/v3 v3.17.0 // indirect
 	github.com/df-mc/go-playfab v1.0.0 // indirect

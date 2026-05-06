@@ -63,7 +63,7 @@ func (e EntityBridge) Rotation() [2]float32 {
 }
 
 func (e EntityBridge) SetRotation(yaw, pitch float32) {
-	e.E.data.Rot = [2]float32{yaw, pitch}
+	e.E.data.Rot = cube.Rotation{float64(yaw), float64(pitch)}
 }
 
 func (e EntityBridge) ID() int64 {
