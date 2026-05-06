@@ -3,10 +3,16 @@ package main
 import (
 	"fmt"
 	"github.com/df-mc/dragonfly/server"
+	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/entity"
+	"github.com/df-mc/dragonfly/server/item"
+	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/player/chat"
+	"github.com/df-mc/dragonfly/server/world"
 	"github.com/pelletier/go-toml"
 	"log/slog"
 	"os"
+	"strings"
 )
 
 func main() {
@@ -24,6 +30,35 @@ func main() {
 	for p := range srv.Accept() {
 		p.Handle(&GlobalHandler{})
 	}
+}
+
+// GlobalHandler maneja eventos globales para implementar lógica sin tocar los bloques.
+type GlobalHandler struct {
+	player.NopHandler
+}
+
+// HandleBlockBreak detecta cuando se rompe un bloque infestado para spawnear el Silverfish.
+func (h *GlobalHandler) HandleBlockBreak(ctx *player.Context, pos cube.Pos, drops *[]item.Stack, xp *int) {
+	p := ctx.Val()
+	b := p.Tx().Block(pos)
+
+	// Verificamos si el bloque es infestado por su nombre codificado.
+	if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
+		name, _ := n.EncodeBlock()
+		if strings.HasPrefix(name, "minecraft:infested_") {
+			// Si no tiene Silk Touch (Toque de Seda), spawneamos el Silverfish.
+			held, _ := p.HeldItems()
+			if !h.hasSilkTouch(held) {
+				opts := world.EntitySpawnOpts{Position: pos.Vec3Centre()}
+				p.Tx().AddEntity(entity.NewSilverfish(opts))
+			}
+		}
+	}
+}
+
+// hasSilkTouch verifica si un ítem tiene Toque de Seda.
+func (h *GlobalHandler) hasSilkTouch(s item.Stack) bool {
+	return false
 }
 
 // readConfig reads the configuration from the config.toml file, or creates the
