@@ -9,7 +9,7 @@ require (
 	github.com/df-mc/worldupgrader v1.0.20
 	github.com/go-gl/mathgl v1.2.0
 	github.com/google/uuid v1.6.0
-	github.com/AssassinGhostYT/MobsX-MC v0.0.0-20260505134207-f6a9c016e788
+	github.com/AssassinGhostYT/MobsX-MC v0.0.0-20260505140000-f6a9c01a2fd2
 	github.com/pelletier/go-toml v1.9.5
 	github.com/sandertv/gophertunnel v1.55.0
 	github.com/segmentio/fasthash v1.0.3
