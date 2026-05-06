@@ -21,7 +21,12 @@ func (w worldBridge) Block(pos mmath.Pos) api.Block {
 }
 
 func (w worldBridge) Entities() []api.Entity {
-	return nil
+	var ents []api.Entity
+	// AHORA SÍ: Escaneamos todas las entidades del mundo para que la IA pueda verlas.
+	for e := range w.E.tx.Entities() {
+		ents = append(ents, EntityBridge{E: e, tx: w.E.tx})
+	}
+	return ents
 }
 
 // blockBridge implements MobsX-MC api.Block.
@@ -49,7 +54,8 @@ func (b blockBridge) Passable() bool {
 
 // EntityBridge implements MobsX-MC api.Entity.
 type EntityBridge struct {
-	E *Ent
+	E  world.Entity
+	tx *world.Tx
 }
 
 func (e EntityBridge) Position() [3]float64 {
@@ -58,13 +64,14 @@ func (e EntityBridge) Position() [3]float64 {
 }
 
 func (e EntityBridge) SetPosition(pos [3]float64) {
-	// En lugar de teletransportar, calculamos la velocidad necesaria para llegar ahí.
-	// Esto permite que las físicas de Dragonfly y las colisiones funcionen.
-	current := e.E.data.Pos
-	dx, dy, dz := pos[0]-current.X(), pos[1]-current.Y(), pos[2]-current.Z()
-
-	// Aplicamos una velocidad suave hacia el objetivo.
-	e.E.data.Vel = mgl64.Vec3{dx, dy, dz}
+	// Solo aplicamos velocidad si es nuestra entidad personalizada (*Ent).
+	if ent, ok := e.E.(*Ent); ok {
+		current := ent.data.Pos
+		dx, dy, dz := pos[0]-current.X(), pos[1]-current.Y(), pos[2]-current.Z()
+		
+		// Aplicamos velocidad limitada para evitar vibraciones bruscas.
+		ent.data.Vel = mgl64.Vec3{dx, dy, dz}
+	}
 }
 
 func (e EntityBridge) Rotation() [2]float32 {
@@ -73,7 +80,9 @@ func (e EntityBridge) Rotation() [2]float32 {
 }
 
 func (e EntityBridge) SetRotation(yaw, pitch float32) {
-	e.E.data.Rot = cube.Rotation{float64(yaw), float64(pitch)}
+	if ent, ok := e.E.(*Ent); ok {
+		ent.data.Rot = cube.Rotation{float64(yaw), float64(pitch)}
+	}
 }
 
 func (e EntityBridge) ID() int64 {
@@ -81,31 +90,33 @@ func (e EntityBridge) ID() int64 {
 }
 
 func (e EntityBridge) HideInBlock(pos mmath.Pos) {
-	b := e.E.tx.Block(cube.Pos{pos.X(), pos.Y(), pos.Z()})
-	var infested world.Block
-	if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
-		name, _ := n.EncodeBlock()
-		switch name {
-		case "minecraft:stone":
-			infested = block.InfestedStone{}
-		case "minecraft:cobblestone":
-			infested = block.InfestedCobblestone{}
-		case "minecraft:deepslate":
-			infested = block.InfestedDeepslate{}
-		case "minecraft:stone_bricks":
-			infested = block.InfestedStoneBricks{Type: block.NormalStoneBricks()}
-		case "minecraft:mossy_stone_bricks":
-			infested = block.InfestedStoneBricks{Type: block.MossyStoneBricks()}
-		case "minecraft:cracked_stone_bricks":
-			infested = block.InfestedStoneBricks{Type: block.CrackedStoneBricks()}
-		case "minecraft:chiseled_stone_bricks":
-			infested = block.InfestedStoneBricks{Type: block.ChiseledStoneBricks()}
+	if ent, ok := e.E.(*Ent); ok {
+		b := e.tx.Block(cube.Pos{pos.X(), pos.Y(), pos.Z()})
+		var infested world.Block
+		if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
+			name, _ := n.EncodeBlock()
+			switch name {
+			case "minecraft:stone":
+				infested = block.InfestedStone{}
+			case "minecraft:cobblestone":
+				infested = block.InfestedCobblestone{}
+			case "minecraft:deepslate":
+				infested = block.InfestedDeepslate{}
+			case "minecraft:stone_bricks":
+				infested = block.InfestedStoneBricks{Type: block.NormalStoneBricks()}
+			case "minecraft:mossy_stone_bricks":
+				infested = block.InfestedStoneBricks{Type: block.MossyStoneBricks()}
+			case "minecraft:cracked_stone_bricks":
+				infested = block.InfestedStoneBricks{Type: block.CrackedStoneBricks()}
+			case "minecraft:chiseled_stone_bricks":
+				infested = block.InfestedStoneBricks{Type: block.ChiseledStoneBricks()}
+			}
 		}
-	}
 
-	if infested != nil {
-		e.E.tx.SetBlock(cube.Pos{pos.X(), pos.Y(), pos.Z()}, infested, nil)
-		e.E.Close()
+		if infested != nil {
+			e.tx.SetBlock(cube.Pos{pos.X(), pos.Y(), pos.Z()}, infested, nil)
+			ent.Close()
+		}
 	}
 }
 
@@ -118,7 +129,7 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 		for y := -rangeY / 2; y <= rangeY/2; y++ {
 			for z := -rangeZ / 2; z <= rangeZ/2; z++ {
 				checkPos := center.Add(cube.Pos{x, y, z})
-				b := e.E.tx.Block(checkPos)
+				b := e.tx.Block(checkPos)
 
 				var normal world.Block
 				if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
@@ -142,12 +153,10 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 				}
 
 				if normal != nil {
-					// Convertimos el bloque infestado en uno normal y sacamos el Silverfish.
-					e.E.tx.SetBlock(checkPos, normal, nil)
+					e.tx.SetBlock(checkPos, normal, nil)
 					opts := world.EntitySpawnOpts{Position: checkPos.Vec3Centre()}
-					e.E.tx.AddEntity(NewSilverfish(opts))
+					e.tx.AddEntity(NewSilverfish(opts))
 
-					// Limitamos a un máximo de 3 Silverfish por cada grito de ayuda para evitar lag masivo.
 					spawned++
 					if spawned >= 3 {
 						return
