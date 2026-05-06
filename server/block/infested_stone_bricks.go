@@ -1,8 +1,6 @@
 package block
 
 import (
-	"github.com/df-mc/dragonfly/server/block/cube"
-	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
 )
 
@@ -16,12 +14,7 @@ type InfestedStoneBricks struct {
 
 // BreakInfo ...
 func (s InfestedStoneBricks) BreakInfo() BreakInfo {
-	return newBreakInfo(0.75, pickaxeHarvestable, pickaxeEffective, silkTouchOnlyDrop(StoneBricks{Type: s.Type})).withBlastResistance(0.75).withBreakHandler(func(pos cube.Pos, tx *world.Tx, u item.User) {
-		if u != nil {
-			opts := world.EntitySpawnOpts{Position: pos.Vec3Centre()}
-			tx.AddEntity(tx.World().EntityRegistry().Config().Silverfish(opts))
-		}
-	})
+	return newBreakInfo(0.75, pickaxeHarvestable, pickaxeEffective, silkTouchOnlyDrop(StoneBricks{Type: s.Type})).withBlastResistance(0.75)
 }
 
 // EncodeItem ...

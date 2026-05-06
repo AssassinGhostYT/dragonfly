@@ -18,12 +18,7 @@ type InfestedDeepslate struct {
 
 // BreakInfo ...
 func (i InfestedDeepslate) BreakInfo() BreakInfo {
-	return newBreakInfo(1.5, pickaxeHarvestable, pickaxeEffective, silkTouchOnlyDrop(Deepslate{Axis: i.Axis})).withBlastResistance(0.75).withBreakHandler(func(pos cube.Pos, tx *world.Tx, u item.User) {
-		if u != nil {
-			opts := world.EntitySpawnOpts{Position: pos.Vec3Centre()}
-			tx.AddEntity(tx.World().EntityRegistry().Config().Silverfish(opts))
-		}
-	})
+	return newBreakInfo(1.5, pickaxeHarvestable, pickaxeEffective, silkTouchOnlyDrop(Deepslate{Axis: i.Axis})).withBlastResistance(0.75)
 }
 
 // UseOnBlock ...
