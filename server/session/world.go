@@ -896,6 +896,14 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, disableRelative bool)
 			Pitch:     1.0,
 		})
 		return
+	case sound.SilverfishStep:
+		s.writePacket(&packet.PlaySound{
+			SoundName: "mob.silverfish.step",
+			Position:  vec64To32(pos),
+			Volume:    0.35,
+			Pitch:     1.0,
+		})
+		return
 	}
 	s.writePacket(pk)
 }

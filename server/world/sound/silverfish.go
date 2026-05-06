@@ -8,3 +8,6 @@ type SilverfishHurt struct{ sound }
 
 // SilverfishDeath is a sound played when a silverfish dies.
 type SilverfishDeath struct{ sound }
+
+// SilverfishStep is a sound played when a silverfish walks.
+type SilverfishStep struct{ sound }

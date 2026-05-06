@@ -18,7 +18,7 @@ type Silverfish struct {
 	mc        *MovementComputer
 	self      *Ent
 
-	health  float64
+	health float64
 	alerted *behavior.CallForHelpBehavior
 }
 
@@ -58,18 +58,29 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 	s.brain.Tick(EntityBridge{E: e}, wBridge)
 
 	// Attack logic: deal damage if close to a player
-	for _, player := range tx.Players() {
-		if player.GameMode().AllowsTakingDamage() {
-			dist := player.Position().Sub(e.Position()).Len()
-			if dist < 1.0 {
-				// Mojang Spec: Easy/Normal: 1 HP, Hard: 1.5 HP
-				dmg := 1.0
-				if tx.World().Difficulty() == world.DifficultyHard {
-					dmg = 1.5
+	for player := range tx.Players() {
+		if p, ok := player.(interface {
+			GameMode() world.GameMode
+			Hurt(damage float64, src world.DamageSource) (n float64, v bool)
+			Position() mgl64.Vec3
+		}); ok {
+			if p.GameMode().AllowsTakingDamage() {
+				dist := p.Position().Sub(e.Position()).Len()
+				if dist < 0.6 {
+					// Mojang Spec: Easy/Normal: 1 HP, Hard: 1.5 HP
+					dmg := 1.0
+					if tx.World().Difficulty() == world.DifficultyHard {
+						dmg = 1.5
+					}
+					p.Hurt(dmg, AttackDamageSource{Attacker: e})
 				}
-				player.Hurt(dmg, world.EntityDamageSource{Entity: e})
 			}
 		}
+	}
+
+	// Step sound
+	if e.Velocity().Len() > 0.01 && rand.Intn(5) == 0 {
+		tx.PlaySound(e.Position(), sound.SilverfishStep{})
 	}
 
 	if rand.Intn(100) == 0 {
@@ -109,9 +120,22 @@ func (s *Silverfish) SetMaxHealth(v float64) {
 func (s *Silverfish) Dead() bool { return s.health <= 0 }
 func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v bool) {
 	s.health -= damage
-	if s.alerted != nil {
-		s.alerted.Alerted = true
+	
+	// Mojang Spec: Survive player/poison damage -> alert others
+	if s.health > 0 && damage > 0 {
+		if s.alerted != nil {
+			s.alerted.Alerted = true
+		}
 	}
+	
+	// Drop XP if dead
+	if s.health <= 0 && s.self != nil {
+		// Mojang Spec: 5 XP
+		for _, handle := range NewExperienceOrbs(s.self.Position(), 5) {
+			s.self.tx.AddEntity(handle)
+		}
+	}
+
 	return damage, true
 }
 func (s *Silverfish) Heal(health float64, src world.HealingSource) { s.health += health }
@@ -126,9 +150,7 @@ func (s *Silverfish) KnockBack(src mgl64.Vec3, f, h float64) {
 	s.self.data.Vel = mgl64.Vec3{pos.X(), h, pos.Y()}
 }
 func (s *Silverfish) Velocity() mgl64.Vec3 { return mgl64.Vec3{} }
-func (s *Silverfish) SetVelocity(v mgl64.Vec3) {
-	// Not used directly as mc.TickMovement handles velocity.
-}
+func (s *Silverfish) SetVelocity(v mgl64.Vec3) {}
 func (s *Silverfish) Speed() float64     { return 0.25 }
 func (s *Silverfish) SetSpeed(v float64) {}
 func (s *Silverfish) AddEffect(e any)    {}
