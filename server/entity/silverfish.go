@@ -17,8 +17,8 @@ type Silverfish struct {
 	navigator *mobsx.Navigator
 	mc        *MovementComputer
 
-	health    float64
-	alerted   *behavior.CallForHelpBehavior
+	health  float64
+	alerted *behavior.CallForHelpBehavior
 }
 
 // NewSilverfish creates a new Silverfish entity handle.
@@ -38,24 +38,24 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		s.brain = mobsx.NewBrain()
 		wBridge := worldBridge{tx: tx}
 		s.navigator = mobsx.NewNavigator(EntityBridge{E: e, Tx: tx}, wBridge)
-		s.navigator.Speed = 0.2 
+		s.navigator.Speed = 0.2
 
 		playerScanner := &sensor.PlayerSensor{Range: 16}
 		s.alerted = &behavior.CallForHelpBehavior{RangeX: 21, RangeY: 11, RangeZ: 21}
-		
+
 		s.brain.AddSensor(playerScanner)
 		s.brain.AddBehavior(s.alerted)
 		s.brain.AddBehavior(behavior.NewAttack(playerScanner, s.navigator))
 		s.brain.AddBehavior(&behavior.InfestBehavior{InfestChance: 0.01})
 		s.brain.AddBehavior(behavior.NewWander(s.navigator, 10))
 	}
-	
+
 	s.brain.Tick(EntityBridge{E: e, Tx: tx}, worldBridge{tx: tx})
-	
+
 	if rand.Intn(100) == 0 {
 		tx.PlaySound(e.Position(), sound.SilverfishAmbient{})
 	}
-	
+
 	m := s.mc.TickMovement(e, e.data.Pos, e.data.Vel, e.data.Rot, tx)
 	e.data.Pos, e.data.Vel = m.pos, m.vel
 	return m
@@ -79,10 +79,10 @@ func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
 func (silverfishType) EncodeNBT(*world.EntityData) map[string]any { return nil }
 
 // Living methods
-func (s *Silverfish) Health() float64 { return s.health }
-func (s *Silverfish) MaxHealth() float64 { return 8 }
+func (s *Silverfish) Health() float64        { return s.health }
+func (s *Silverfish) MaxHealth() float64     { return 8 }
 func (s *Silverfish) SetMaxHealth(v float64) { s.health = v }
-func (s *Silverfish) Dead() bool { return s.health <= 0 }
+func (s *Silverfish) Dead() bool             { return s.health <= 0 }
 func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v bool) {
 	s.health -= damage
 	if s.alerted != nil {
@@ -91,13 +91,13 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 	return damage, true
 }
 func (s *Silverfish) Heal(health float64, src world.HealingSource) { s.health += health }
-func (s *Silverfish) KnockBack(src mgl64.Vec3, f, h float64) {}
-func (s *Silverfish) Velocity() mgl64.Vec3 { return mgl64.Vec3{} }
-func (s *Silverfish) SetVelocity(v mgl64.Vec3) {}
-func (s *Silverfish) Speed() float64 { return 0.2 }
-func (s *Silverfish) SetSpeed(v float64) {}
-func (s *Silverfish) AddEffect(e any) {}
-func (s *Silverfish) RemoveEffect(e any) {}
-func (s *Silverfish) Effects() []any { return nil }
-func (s *Silverfish) PistonImmovable() bool { return false }
-func (s *Silverfish) PistonBreakable() bool { return false }
+func (s *Silverfish) KnockBack(src mgl64.Vec3, f, h float64)       {}
+func (s *Silverfish) Velocity() mgl64.Vec3                         { return mgl64.Vec3{} }
+func (s *Silverfish) SetVelocity(v mgl64.Vec3)                     {}
+func (s *Silverfish) Speed() float64                               { return 0.2 }
+func (s *Silverfish) SetSpeed(v float64)                           {}
+func (s *Silverfish) AddEffect(e any)                              {}
+func (s *Silverfish) RemoveEffect(e any)                           {}
+func (s *Silverfish) Effects() []any                               { return nil }
+func (s *Silverfish) PistonImmovable() bool                        { return false }
+func (s *Silverfish) PistonBreakable() bool                        { return false }

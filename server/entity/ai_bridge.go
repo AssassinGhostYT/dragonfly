@@ -27,7 +27,9 @@ type blockBridge struct {
 }
 
 func (b blockBridge) Name() string {
-	if n, ok := b.b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
+	if n, ok := b.b.(interface {
+		EncodeBlock() (string, map[string]any)
+	}); ok {
 		name, _ := n.EncodeBlock()
 		return name
 	}
@@ -35,7 +37,7 @@ func (b blockBridge) Name() string {
 }
 
 func (b blockBridge) Solid() bool {
-	return b.Name() != "minecraft:air" 
+	return b.Name() != "minecraft:air"
 }
 
 func (b blockBridge) Passable() bool {
