@@ -116,7 +116,7 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 		if infested != nil {
 			e.tx.SetBlock(cube.Pos{pos.X(), pos.Y(), pos.Z()}, infested, nil)
 			// Efecto visual de "humo" al entrar al bloque
-			e.tx.AddParticle(pos.Vec3Centre(), particle.HugeExplosion{})
+			e.tx.AddParticle(cube.Pos{pos.X(), pos.Y(), pos.Z()}.Vec3Centre(), particle.HugeExplosion{})
 			ent.Close()
 		}
 	}
