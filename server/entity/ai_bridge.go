@@ -13,7 +13,7 @@ type worldBridge struct {
 }
 
 func (w worldBridge) Block(pos mmath.Pos) api.Block {
-	b := w.tx.Block(cube.Pos{int(pos.X), int(pos.Y), int(pos.Z)})
+	b := w.tx.Block(cube.Pos{pos.X(), pos.Y(), pos.Z()})
 	return blockBridge{b: b}
 }
 
