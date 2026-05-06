@@ -32,12 +32,15 @@ func (s Silverfish) Apply(data *world.EntityData) {
 	data.Data = &s
 }
 
-// Tick ...
+// Tick se ejecuta en cada tic del servidor para actualizar la IA y el movimiento.
 func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 	if s.brain == nil {
 		s.brain = mobsx.NewBrain()
-		wBridge := worldBridge{tx: tx}
-		s.navigator = mobsx.NewNavigator(EntityBridge{E: e, Tx: tx}, wBridge)
+		// Usamos el puntero a la entidad 'e' para que los puentes siempre tengan acceso al tx actual.
+		eBridge := EntityBridge{E: e}
+		wBridge := worldBridge{E: e}
+
+		s.navigator = mobsx.NewNavigator(eBridge, wBridge)
 		s.navigator.Speed = 0.2
 
 		playerScanner := &sensor.PlayerSensor{Range: 16}
@@ -50,7 +53,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		s.brain.AddBehavior(behavior.NewWander(s.navigator, 10))
 	}
 
-	s.brain.Tick(EntityBridge{E: e, Tx: tx}, worldBridge{tx: tx})
+	s.brain.Tick(EntityBridge{E: e}, worldBridge{E: e})
 
 	if rand.Intn(100) == 0 {
 		tx.PlaySound(e.Position(), sound.SilverfishAmbient{})

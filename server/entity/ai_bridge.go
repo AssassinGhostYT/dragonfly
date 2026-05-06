@@ -10,11 +10,12 @@ import (
 
 // worldBridge implements MobsX-MC api.World.
 type worldBridge struct {
-	tx *world.Tx
+	E *Ent
 }
 
 func (w worldBridge) Block(pos mmath.Pos) api.Block {
-	b := w.tx.Block(cube.Pos{pos.X(), pos.Y(), pos.Z()})
+	// Obtenemos la transacción actual de la entidad. Dragonfly actualiza w.E.tx en cada tick.
+	b := w.E.tx.Block(cube.Pos{pos.X(), pos.Y(), pos.Z()})
 	return blockBridge{b: b}
 }
 
@@ -47,8 +48,7 @@ func (b blockBridge) Passable() bool {
 
 // EntityBridge implements MobsX-MC api.Entity.
 type EntityBridge struct {
-	E  *Ent
-	Tx *world.Tx
+	E *Ent
 }
 
 func (e EntityBridge) Position() [3]float64 {
@@ -74,7 +74,7 @@ func (e EntityBridge) ID() int64 {
 }
 
 func (e EntityBridge) HideInBlock(pos mmath.Pos) {
-	b := e.Tx.Block(cube.Pos{pos.X(), pos.Y(), pos.Z()})
+	b := e.E.tx.Block(cube.Pos{pos.X(), pos.Y(), pos.Z()})
 	var infested world.Block
 	if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
 		name, _ := n.EncodeBlock()
@@ -86,7 +86,6 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 		case "minecraft:deepslate":
 			infested = block.InfestedDeepslate{}
 		case "minecraft:stone_bricks":
-			// We might need to handle variants here if stone_bricks uses states.
 			infested = block.InfestedStoneBricks{Type: block.NormalStoneBricks()}
 		case "minecraft:mossy_stone_bricks":
 			infested = block.InfestedStoneBricks{Type: block.MossyStoneBricks()}
@@ -98,7 +97,7 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 	}
 
 	if infested != nil {
-		e.Tx.SetBlock(cube.Pos{pos.X(), pos.Y(), pos.Z()}, infested, nil)
+		e.E.tx.SetBlock(cube.Pos{pos.X(), pos.Y(), pos.Z()}, infested, nil)
 		e.E.Close()
 	}
 }
