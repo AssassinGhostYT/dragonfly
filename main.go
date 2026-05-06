@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/df-mc/dragonfly/server"
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/cmd"
 	"github.com/df-mc/dragonfly/server/entity"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/player"
@@ -12,6 +13,7 @@ import (
 	"github.com/pelletier/go-toml"
 	"log/slog"
 	"os"
+	"reflect"
 	"strings"
 )
 
@@ -23,6 +25,8 @@ func main() {
 		panic(err)
 	}
 
+	cmd.Register(cmd.New("gamemode", "Cambia el modo de juego de un jugador.", []string{"gm"}, GameModeCommand{}))
+
 	srv := conf.New()
 	srv.CloseOnProgramEnd()
 
@@ -30,6 +34,50 @@ func main() {
 	for p := range srv.Accept() {
 		p.Handle(&GlobalHandler{})
 	}
+}
+
+// GameModeCommand es el comando para cambiar el modo de juego.
+type GameModeCommand struct {
+	Mode GameModeArg `cmd:"mode"`
+}
+
+func (c GameModeCommand) Run(source cmd.Source, output *cmd.Output, tx *world.Tx) {
+	if p, ok := source.(*player.Player); ok {
+		p.SetGameMode(c.Mode.mode)
+		output.Printf("Tu modo de juego ha sido actualizado a %s.", c.Mode.name)
+	}
+}
+
+// GameModeArg es un parámetro personalizado para parsear modos de juego.
+type GameModeArg struct {
+	mode world.GameMode
+	name string
+}
+
+func (GameModeArg) Type() string { return "GameMode" }
+func (g *GameModeArg) Parse(line *cmd.Line, v reflect.Value) error {
+	arg, ok := line.Next()
+	if !ok {
+		return fmt.Errorf("falta el modo de juego")
+	}
+	switch strings.ToLower(arg) {
+	case "0", "survival", "s":
+		g.mode = world.GameModeSurvival
+		g.name = "Supervivencia"
+	case "1", "creative", "c":
+		g.mode = world.GameModeCreative
+		g.name = "Creativo"
+	case "2", "adventure", "a":
+		g.mode = world.GameModeAdventure
+		g.name = "Aventura"
+	case "3", "spectator", "sp":
+		g.mode = world.GameModeSpectator
+		g.name = "Espectador"
+	default:
+		return fmt.Errorf("modo de juego inválido: %s", arg)
+	}
+	v.Set(reflect.ValueOf(*g))
+	return nil
 }
 
 // GlobalHandler maneja eventos globales para implementar lógica sin tocar los bloques.
