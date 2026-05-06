@@ -14,6 +14,9 @@ type SpawnEgg struct {
 
 // UseOnBlock spawns the entity at the position of the block clicked.
 func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, tx *world.Tx, user User, ctx *UseContext) bool {
+	if s.Entity == nil {
+		return false
+	}
 	opts := world.EntitySpawnOpts{Position: pos.Side(face).Vec3Middle()}
 	
 	// Check if there is a specific spawner for this entity in the registry config.
