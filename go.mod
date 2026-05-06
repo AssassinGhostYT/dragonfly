@@ -19,6 +19,8 @@ require (
 	golang.org/x/tools v0.28.0
 )
 
+replace github.com/AssassinGhostYT/MobsX-MC => ../mobsx-mc
+
 require (
 	github.com/AssassinGhostYT/MobsX-MC v0.0.0-20260505134207-9cd4d4458b6a
 	github.com/coreos/go-oidc/v3 v3.17.0 // indirect
