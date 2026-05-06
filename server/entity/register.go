@@ -2,10 +2,20 @@ package entity
 
 import (
 	"github.com/df-mc/dragonfly/server/item"
+	"github.com/df-mc/dragonfly/server/item/creative"
 	"github.com/df-mc/dragonfly/server/item/enchantment"
 	"github.com/df-mc/dragonfly/server/item/potion"
 	"github.com/df-mc/dragonfly/server/world"
 )
+
+func init() {
+	silverfishEgg := item.SpawnEgg{Entity: SilverfishType}
+	world.RegisterItem(silverfishEgg)
+	creative.RegisterItem(creative.Item{
+		Stack: item.NewStack(silverfishEgg, 1),
+		Group: "itemGroup.name.spawnEgg",
+	})
+}
 
 // DefaultRegistry is a world.EntityRegistry that registers all default entities
 // implemented by Dragonfly.
@@ -48,6 +58,7 @@ var conf = world.EntityRegistryConfig{
 	SplashPotion: func(opts world.EntitySpawnOpts, t any, owner world.Entity) *world.EntityHandle {
 		return NewSplashPotion(opts, t.(potion.Potion), owner)
 	},
+	Silverfish: NewSilverfish,
 	Arrow: func(opts world.EntitySpawnOpts, damage float64, owner world.Entity, critical, disallowPickup, obtainArrowOnPickup bool, punchLevel int, tip any) *world.EntityHandle {
 		conf := arrowConf
 		conf.Damage, conf.Potion, conf.Owner = damage, tip.(potion.Potion), owner.H()

@@ -3,6 +3,7 @@ package entity
 import (
 	"github.com/AssassinGhostYT/MobsX-MC/api"
 	"github.com/AssassinGhostYT/MobsX-MC/mmath"
+	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/world"
 )
@@ -72,6 +73,34 @@ func (e EntityBridge) ID() int64 {
 	return 0
 }
 
-func (e EntityBridge) HideInBlock(pos mmath.Pos) {}
+func (e EntityBridge) HideInBlock(pos mmath.Pos) {
+	b := e.Tx.Block(cube.Pos{pos.X(), pos.Y(), pos.Z()})
+	var infested world.Block
+	if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
+		name, _ := n.EncodeBlock()
+		switch name {
+		case "minecraft:stone":
+			infested = block.InfestedStone{}
+		case "minecraft:cobblestone":
+			infested = block.InfestedCobblestone{}
+		case "minecraft:deepslate":
+			infested = block.InfestedDeepslate{}
+		case "minecraft:stone_bricks":
+			// We might need to handle variants here if stone_bricks uses states.
+			infested = block.InfestedStoneBricks{Type: block.NormalStoneBricks()}
+		case "minecraft:mossy_stone_bricks":
+			infested = block.InfestedStoneBricks{Type: block.MossyStoneBricks()}
+		case "minecraft:cracked_stone_bricks":
+			infested = block.InfestedStoneBricks{Type: block.CrackedStoneBricks()}
+		case "minecraft:chiseled_stone_bricks":
+			infested = block.InfestedStoneBricks{Type: block.ChiseledStoneBricks()}
+		}
+	}
+
+	if infested != nil {
+		e.Tx.SetBlock(cube.Pos{pos.X(), pos.Y(), pos.Z()}, infested, nil)
+		e.E.Close()
+	}
+}
 
 func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {}

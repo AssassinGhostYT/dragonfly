@@ -872,6 +872,30 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, disableRelative bool)
 			Volume:    1,
 			Pitch:     1.0,
 		})
+	case sound.SilverfishAmbient:
+		s.writePacket(&packet.PlaySound{
+			SoundName: "mob.silverfish.say",
+			Position:  vec64To32(pos),
+			Volume:    1,
+			Pitch:     1.0,
+		})
+		return
+	case sound.SilverfishHurt:
+		s.writePacket(&packet.PlaySound{
+			SoundName: "mob.silverfish.hit",
+			Position:  vec64To32(pos),
+			Volume:    1,
+			Pitch:     1.0,
+		})
+		return
+	case sound.SilverfishDeath:
+		s.writePacket(&packet.PlaySound{
+			SoundName: "mob.silverfish.kill",
+			Position:  vec64To32(pos),
+			Volume:    1,
+			Pitch:     1.0,
+		})
+		return
 	}
 	s.writePacket(pk)
 }
