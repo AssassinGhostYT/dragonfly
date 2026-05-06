@@ -9,10 +9,8 @@ import (
 )
 
 func init() {
-	silverfishEgg := item.SpawnEgg{Entity: SilverfishType}
-	world.RegisterItem(silverfishEgg)
 	creative.RegisterItem(creative.Item{
-		Stack: item.NewStack(silverfishEgg, 1),
+		Stack: item.NewStack(item.SpawnEgg{Entity: SilverfishType}, 1),
 		Group: "itemGroup.name.spawnEgg",
 	})
 }
