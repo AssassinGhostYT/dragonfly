@@ -16,6 +16,7 @@ type Silverfish struct {
 	brain     *mobsx.Brain
 	navigator *mobsx.Navigator
 	mc        *MovementComputer
+	self      *Ent
 
 	health  float64
 	alerted *behavior.CallForHelpBehavior
@@ -32,16 +33,15 @@ func (s Silverfish) Apply(data *world.EntityData) {
 	data.Data = &s
 }
 
-// Tick se ejecuta en cada tic del servidor para actualizar la IA y el movimiento.
+// Tick ...
 func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
+	s.self = e
 	if s.brain == nil {
 		s.brain = mobsx.NewBrain()
-		// Usamos el puntero a la entidad 'e' para que los puentes siempre tengan acceso al tx actual.
-		eBridge := EntityBridge{E: e}
 		wBridge := worldBridge{E: e}
-
-		s.navigator = mobsx.NewNavigator(eBridge, wBridge)
-		s.navigator.Speed = 0.2
+		s.navigator = mobsx.NewNavigator(EntityBridge{E: e}, wBridge)
+		// Mojang Spec: Speed 0.25
+		s.navigator.Speed = 0.25
 
 		playerScanner := &sensor.PlayerSensor{Range: 16}
 		s.alerted = &behavior.CallForHelpBehavior{RangeX: 21, RangeY: 11, RangeZ: 21}
@@ -56,6 +56,21 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 	wBridge := worldBridge{E: e}
 	s.navigator.Sync(wBridge)
 	s.brain.Tick(EntityBridge{E: e}, wBridge)
+
+	// Attack logic: deal damage if close to a player
+	for _, player := range tx.Players() {
+		if player.GameMode().AllowsTakingDamage() {
+			dist := player.Position().Sub(e.Position()).Len()
+			if dist < 1.0 {
+				// Mojang Spec: Easy/Normal: 1 HP, Hard: 1.5 HP
+				dmg := 1.0
+				if tx.World().Difficulty() == world.DifficultyHard {
+					dmg = 1.5
+				}
+				player.Hurt(dmg, world.EntityDamageSource{Entity: e})
+			}
+		}
+	}
 
 	if rand.Intn(100) == 0 {
 		tx.PlaySound(e.Position(), sound.SilverfishAmbient{})
@@ -75,6 +90,8 @@ func (t silverfishType) Open(tx *world.Tx, handle *world.EntityHandle, data *wor
 	return &Ent{tx: tx, handle: handle, data: data}
 }
 func (silverfishType) EncodeEntity() string { return "minecraft:silverfish" }
+
+// Mojang Spec: Height 0.3, Width 0.4
 func (silverfishType) BBox(world.Entity) cube.BBox {
 	return cube.Box(-0.2, 0, -0.2, 0.2, 0.3, 0.2)
 }
@@ -84,9 +101,11 @@ func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
 func (silverfishType) EncodeNBT(*world.EntityData) map[string]any { return nil }
 
 // Living methods
-func (s *Silverfish) Health() float64 { return s.health }
+func (s *Silverfish) Health() float64    { return s.health }
 func (s *Silverfish) MaxHealth() float64 { return 8 }
-func (s *Silverfish) SetMaxHealth(v float64) { s.health = v }
+func (s *Silverfish) SetMaxHealth(v float64) {
+	s.health = v
+}
 func (s *Silverfish) Dead() bool { return s.health <= 0 }
 func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v bool) {
 	s.health -= damage
@@ -97,14 +116,27 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 }
 func (s *Silverfish) Heal(health float64, src world.HealingSource) { s.health += health }
 func (s *Silverfish) KnockBack(src mgl64.Vec3, f, h float64) {
-	s.mc.KnockBack(src, f, h)
+	if s.self == nil {
+		return
+	}
+	pos := mgl64.Vec2{s.self.data.Pos.X(), s.self.data.Pos.Z()}.Sub(mgl64.Vec2{src.X(), src.Z()})
+	if len := pos.Len(); len > 0 {
+		pos = pos.Mul(f / len)
+	}
+	s.self.data.Vel = mgl64.Vec3{pos.X(), h, pos.Y()}
 }
 func (s *Silverfish) Velocity() mgl64.Vec3 { return mgl64.Vec3{} }
-func (s *Silverfish) SetVelocity(v mgl64.Vec3) {}
-func (s *Silverfish) Speed() float64                               { return 0.2 }
-func (s *Silverfish) SetSpeed(v float64)                           {}
-func (s *Silverfish) AddEffect(e any)                              {}
-func (s *Silverfish) RemoveEffect(e any)                           {}
-func (s *Silverfish) Effects() []any                               { return nil }
-func (s *Silverfish) PistonImmovable() bool                        { return false }
-func (s *Silverfish) PistonBreakable() bool                        { return false }
+func (s *Silverfish) SetVelocity(v mgl64.Vec3) {
+	// Not used directly as mc.TickMovement handles velocity.
+}
+func (s *Silverfish) Speed() float64     { return 0.25 }
+func (s *Silverfish) SetSpeed(v float64) {}
+func (s *Silverfish) AddEffect(e any)    {}
+func (s *Silverfish) RemoveEffect(e any) {}
+func (s *Silverfish) Effects() []any     { return nil }
+func (s *Silverfish) PistonImmovable() bool {
+	return false
+}
+func (s *Silverfish) PistonBreakable() bool {
+	return false
+}

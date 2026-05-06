@@ -6,6 +6,7 @@ import (
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/world"
+	"github.com/go-gl/mathgl/mgl64"
 )
 
 // worldBridge implements MobsX-MC api.World.
@@ -111,6 +112,7 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 	pos := e.E.Position()
 	center := cube.Pos{int(pos.X()), int(pos.Y()), int(pos.Z())}
+	spawned := 0
 
 	for x := -rangeX / 2; x <= rangeX/2; x++ {
 		for y := -rangeY / 2; y <= rangeY/2; y++ {
@@ -144,7 +146,7 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 					e.E.tx.SetBlock(checkPos, normal, nil)
 					opts := world.EntitySpawnOpts{Position: checkPos.Vec3Centre()}
 					e.E.tx.AddEntity(NewSilverfish(opts))
-					
+
 					// Limitamos a un máximo de 3 Silverfish por cada grito de ayuda para evitar lag masivo.
 					spawned++
 					if spawned >= 3 {
