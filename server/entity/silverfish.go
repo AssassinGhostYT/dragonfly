@@ -53,7 +53,9 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		s.brain.AddBehavior(behavior.NewWander(s.navigator, 10))
 	}
 
-	s.brain.Tick(EntityBridge{E: e}, worldBridge{E: e})
+	wBridge := worldBridge{E: e}
+	s.navigator.Sync(wBridge)
+	s.brain.Tick(EntityBridge{E: e}, wBridge)
 
 	if rand.Intn(100) == 0 {
 		tx.PlaySound(e.Position(), sound.SilverfishAmbient{})

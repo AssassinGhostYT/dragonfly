@@ -1,6 +1,6 @@
 module github.com/df-mc/dragonfly
 
-go 1.24.2
+go 1.26.0
 
 require (
 	github.com/AssassinGhostYT/MobsX-MC v0.0.0-20260506052937-53f5ea77c3f5
