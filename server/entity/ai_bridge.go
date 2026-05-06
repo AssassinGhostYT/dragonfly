@@ -53,17 +53,21 @@ func (e EntityBridge) Position() [3]float64 {
 	return [3]float64{pos.X(), pos.Y(), pos.Z()}
 }
 
-func (e EntityBridge) SetPosition(pos [3]float64) {}
+func (e EntityBridge) SetPosition(pos [3]float64) {
+	e.E.data.Pos = [3]float64{pos[0], pos[1], pos[2]}
+}
 
 func (e EntityBridge) Rotation() [2]float32 {
 	rot := e.E.Rotation()
 	return [2]float32{float32(rot.Yaw()), float32(rot.Pitch())}
 }
 
-func (e EntityBridge) SetRotation(yaw, pitch float32) {}
+func (e EntityBridge) SetRotation(yaw, pitch float32) {
+	e.E.data.Rot = [2]float32{yaw, pitch}
+}
 
 func (e EntityBridge) ID() int64 {
-	return int64(e.E.H().RuntimeID())
+	return 0
 }
 
 func (e EntityBridge) HideInBlock(pos mmath.Pos) {}

@@ -9,6 +9,7 @@ require (
 	github.com/df-mc/worldupgrader v1.0.20
 	github.com/go-gl/mathgl v1.2.0
 	github.com/google/uuid v1.6.0
+	github.com/AssassinGhostYT/MobsX-MC v0.0.0-20260505134207-f6a9c016e788
 	github.com/pelletier/go-toml v1.9.5
 	github.com/sandertv/gophertunnel v1.55.0
 	github.com/segmentio/fasthash v1.0.3
@@ -19,6 +20,7 @@ require (
 )
 
 require (
+	github.com/AssassinGhostYT/MobsX-MC v0.0.0-20260505134207-9cd4d4458b6a
 	github.com/coreos/go-oidc/v3 v3.17.0 // indirect
 	github.com/df-mc/go-playfab v1.0.0 // indirect
 	github.com/df-mc/go-xsapi v1.0.1 // indirect
