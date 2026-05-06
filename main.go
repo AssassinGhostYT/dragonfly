@@ -55,28 +55,29 @@ type GameModeArg struct {
 }
 
 func (GameModeArg) Type() string { return "GameMode" }
-func (g *GameModeArg) Parse(line *cmd.Line, v reflect.Value) error {
+func (g GameModeArg) Parse(line *cmd.Line, v reflect.Value) error {
 	arg, ok := line.Next()
 	if !ok {
 		return fmt.Errorf("falta el modo de juego")
 	}
+	var newG GameModeArg
 	switch strings.ToLower(arg) {
 	case "0", "survival", "s":
-		g.mode = world.GameModeSurvival
-		g.name = "Supervivencia"
+		newG.mode = world.GameModeSurvival
+		newG.name = "Supervivencia"
 	case "1", "creative", "c":
-		g.mode = world.GameModeCreative
-		g.name = "Creativo"
+		newG.mode = world.GameModeCreative
+		newG.name = "Creativo"
 	case "2", "adventure", "a":
-		g.mode = world.GameModeAdventure
-		g.name = "Aventura"
+		newG.mode = world.GameModeAdventure
+		newG.name = "Aventura"
 	case "3", "spectator", "sp":
-		g.mode = world.GameModeSpectator
-		g.name = "Espectador"
+		newG.mode = world.GameModeSpectator
+		newG.name = "Espectador"
 	default:
 		return fmt.Errorf("modo de juego inválido: %s", arg)
 	}
-	v.Set(reflect.ValueOf(*g))
+	v.Set(reflect.ValueOf(newG))
 	return nil
 }
 

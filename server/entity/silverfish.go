@@ -76,7 +76,7 @@ func (t silverfishType) Open(tx *world.Tx, handle *world.EntityHandle, data *wor
 }
 func (silverfishType) EncodeEntity() string { return "minecraft:silverfish" }
 func (silverfishType) BBox(world.Entity) cube.BBox {
-	return cube.Box(-0.15, 0, -0.15, 0.15, 0.3, 0.15)
+	return cube.Box(-0.2, 0, -0.2, 0.2, 0.3, 0.2)
 }
 func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
 	Silverfish{health: 8}.Apply(data)
@@ -84,10 +84,10 @@ func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
 func (silverfishType) EncodeNBT(*world.EntityData) map[string]any { return nil }
 
 // Living methods
-func (s *Silverfish) Health() float64        { return s.health }
-func (s *Silverfish) MaxHealth() float64     { return 8 }
+func (s *Silverfish) Health() float64 { return s.health }
+func (s *Silverfish) MaxHealth() float64 { return 8 }
 func (s *Silverfish) SetMaxHealth(v float64) { s.health = v }
-func (s *Silverfish) Dead() bool             { return s.health <= 0 }
+func (s *Silverfish) Dead() bool { return s.health <= 0 }
 func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v bool) {
 	s.health -= damage
 	if s.alerted != nil {
@@ -96,9 +96,11 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 	return damage, true
 }
 func (s *Silverfish) Heal(health float64, src world.HealingSource) { s.health += health }
-func (s *Silverfish) KnockBack(src mgl64.Vec3, f, h float64)       {}
-func (s *Silverfish) Velocity() mgl64.Vec3                         { return mgl64.Vec3{} }
-func (s *Silverfish) SetVelocity(v mgl64.Vec3)                     {}
+func (s *Silverfish) KnockBack(src mgl64.Vec3, f, h float64) {
+	s.mc.KnockBack(src, f, h)
+}
+func (s *Silverfish) Velocity() mgl64.Vec3 { return mgl64.Vec3{} }
+func (s *Silverfish) SetVelocity(v mgl64.Vec3) {}
 func (s *Silverfish) Speed() float64                               { return 0.2 }
 func (s *Silverfish) SetSpeed(v float64)                           {}
 func (s *Silverfish) AddEffect(e any)                              {}

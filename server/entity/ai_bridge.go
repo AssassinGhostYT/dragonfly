@@ -57,7 +57,13 @@ func (e EntityBridge) Position() [3]float64 {
 }
 
 func (e EntityBridge) SetPosition(pos [3]float64) {
-	e.E.data.Pos = [3]float64{pos[0], pos[1], pos[2]}
+	// En lugar de teletransportar, calculamos la velocidad necesaria para llegar ahí.
+	// Esto permite que las físicas de Dragonfly y las colisiones funcionen.
+	current := e.E.data.Pos
+	dx, dy, dz := pos[0]-current.X(), pos[1]-current.Y(), pos[2]-current.Z()
+
+	// Aplicamos una velocidad suave hacia el objetivo.
+	e.E.data.Vel = mgl64.Vec3{dx, dy, dz}
 }
 
 func (e EntityBridge) Rotation() [2]float32 {
@@ -70,7 +76,7 @@ func (e EntityBridge) SetRotation(yaw, pitch float32) {
 }
 
 func (e EntityBridge) ID() int64 {
-	return 0
+	return int64(e.E.H().UUID().ID())
 }
 
 func (e EntityBridge) HideInBlock(pos mmath.Pos) {
