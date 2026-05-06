@@ -49,7 +49,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		s.brain.AddSensor(playerScanner)
 		s.brain.AddBehavior(s.alerted)
 		s.brain.AddBehavior(behavior.NewAttack(playerScanner, s.navigator))
-		s.brain.AddBehavior(&behavior.InfestBehavior{InfestChance: 0.01})
+		s.brain.AddBehavior(&behavior.InfestBehavior{InfestChance: 0.05})
 		s.brain.AddBehavior(behavior.NewWander(s.navigator, 10))
 	}
 
@@ -66,7 +66,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		}); ok {
 			if p.GameMode().AllowsTakingDamage() {
 				dist := p.Position().Sub(e.Position()).Len()
-				if dist < 0.6 {
+				if dist < 0.7 { // Slightly increased range
 					// Mojang Spec: Easy/Normal: 1 HP, Hard: 1.5 HP
 					dmg := 1.0
 					if tx.World().Difficulty() == world.DifficultyHard {
@@ -78,8 +78,8 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		}
 	}
 
-	// Step sound
-	if e.Velocity().Len() > 0.01 && rand.Intn(5) == 0 {
+	// Step sound - played when moving
+	if e.Velocity().LenSqr() > 0.001 && rand.Intn(10) == 0 {
 		tx.PlaySound(e.Position(), sound.SilverfishStep{})
 	}
 
@@ -102,9 +102,9 @@ func (t silverfishType) Open(tx *world.Tx, handle *world.EntityHandle, data *wor
 }
 func (silverfishType) EncodeEntity() string { return "minecraft:silverfish" }
 
-// Mojang Spec: Height 0.3, Width 0.4
+// Mojang Spec: Height 0.3, Width 0.4. Aumentamos a 0.5 de ancho para facilitar el golpe.
 func (silverfishType) BBox(world.Entity) cube.BBox {
-	return cube.Box(-0.2, 0, -0.2, 0.2, 0.3, 0.2)
+	return cube.Box(-0.25, 0, -0.25, 0.25, 0.3, 0.25)
 }
 func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
 	Silverfish{health: 8}.Apply(data)

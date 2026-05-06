@@ -10,6 +10,7 @@ import (
 	"github.com/df-mc/dragonfly/server/player"
 	"github.com/df-mc/dragonfly/server/player/chat"
 	"github.com/df-mc/dragonfly/server/world"
+	"github.com/df-mc/dragonfly/server/world/particle"
 	"github.com/pelletier/go-toml"
 	"log/slog"
 	"os"
@@ -100,6 +101,7 @@ func (h *GlobalHandler) HandleBlockBreak(ctx *player.Context, pos cube.Pos, drop
 			if !h.hasSilkTouch(held) {
 				opts := world.EntitySpawnOpts{Position: pos.Vec3Centre()}
 				p.Tx().AddEntity(entity.NewSilverfish(opts))
+				p.Tx().AddParticle(pos.Vec3Centre(), particle.HugeExplosion{})
 			}
 		}
 	}

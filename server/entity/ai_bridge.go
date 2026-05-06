@@ -6,6 +6,7 @@ import (
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/world"
+	"github.com/df-mc/dragonfly/server/world/particle"
 	"github.com/go-gl/mathgl/mgl64"
 )
 
@@ -22,7 +23,7 @@ func (w worldBridge) Block(pos mmath.Pos) api.Block {
 
 func (w worldBridge) Entities() []api.Entity {
 	var ents []api.Entity
-	// AHORA SÍ: Escaneamos todas las entidades del mundo para que la IA pueda verlas.
+	// Escaneamos todas las entidades para que la IA vea a los jugadores.
 	for e := range w.E.tx.Entities() {
 		ents = append(ents, EntityBridge{E: e, tx: w.E.tx})
 	}
@@ -64,12 +65,11 @@ func (e EntityBridge) Position() [3]float64 {
 }
 
 func (e EntityBridge) SetPosition(pos [3]float64) {
-	// Solo aplicamos velocidad si es nuestra entidad personalizada (*Ent).
 	if ent, ok := e.E.(*Ent); ok {
 		current := ent.data.Pos
 		dx, dy, dz := pos[0]-current.X(), pos[1]-current.Y(), pos[2]-current.Z()
 		
-		// Aplicamos velocidad limitada para evitar vibraciones bruscas.
+		// Aplicamos velocidad limitada.
 		ent.data.Vel = mgl64.Vec3{dx, dy, dz}
 	}
 }
@@ -115,6 +115,8 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 
 		if infested != nil {
 			e.tx.SetBlock(cube.Pos{pos.X(), pos.Y(), pos.Z()}, infested, nil)
+			// Efecto visual de "humo" al entrar al bloque
+			e.tx.AddParticle(pos.Vec3Centre(), particle.HugeExplosion{})
 			ent.Close()
 		}
 	}
@@ -154,6 +156,9 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 
 				if normal != nil {
 					e.tx.SetBlock(checkPos, normal, nil)
+					// Efecto visual de "humo" al salir del bloque
+					e.tx.AddParticle(checkPos.Vec3Centre(), particle.HugeExplosion{})
+					
 					opts := world.EntitySpawnOpts{Position: checkPos.Vec3Centre()}
 					e.tx.AddEntity(NewSilverfish(opts))
 
