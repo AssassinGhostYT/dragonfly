@@ -1,4 +1,4 @@
 #!/bin/bash
-# Script para ejecutar el servidor Dragonfly con Silverfish
-chmod +x dragonfly_server_arm64 2>/dev/null
-./dragonfly_server_arm64
+# Script oficial para ejecutar Dragonfly
+chmod +x dragonfly-arm64 2>/dev/null
+./dragonfly-arm64
