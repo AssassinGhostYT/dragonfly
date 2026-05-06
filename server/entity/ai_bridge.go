@@ -108,4 +108,50 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 	}
 }
 
-func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {}
+func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
+	pos := e.E.Position()
+	center := cube.Pos{int(pos.X()), int(pos.Y()), int(pos.Z())}
+
+	for x := -rangeX / 2; x <= rangeX/2; x++ {
+		for y := -rangeY / 2; y <= rangeY/2; y++ {
+			for z := -rangeZ / 2; z <= rangeZ/2; z++ {
+				checkPos := center.Add(cube.Pos{x, y, z})
+				b := e.E.tx.Block(checkPos)
+
+				var normal world.Block
+				if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
+					name, _ := n.EncodeBlock()
+					switch name {
+					case "minecraft:infested_stone":
+						normal = block.Stone{}
+					case "minecraft:infested_cobblestone":
+						normal = block.Cobblestone{}
+					case "minecraft:infested_deepslate":
+						normal = block.Deepslate{}
+					case "minecraft:infested_stone_bricks":
+						normal = block.StoneBricks{Type: block.NormalStoneBricks()}
+					case "minecraft:infested_mossy_stone_bricks":
+						normal = block.StoneBricks{Type: block.MossyStoneBricks()}
+					case "minecraft:infested_cracked_stone_bricks":
+						normal = block.StoneBricks{Type: block.CrackedStoneBricks()}
+					case "minecraft:infested_chiseled_stone_bricks":
+						normal = block.StoneBricks{Type: block.ChiseledStoneBricks()}
+					}
+				}
+
+				if normal != nil {
+					// Convertimos el bloque infestado en uno normal y sacamos el Silverfish.
+					e.E.tx.SetBlock(checkPos, normal, nil)
+					opts := world.EntitySpawnOpts{Position: checkPos.Vec3Centre()}
+					e.E.tx.AddEntity(NewSilverfish(opts))
+					
+					// Limitamos a un máximo de 3 Silverfish por cada grito de ayuda para evitar lag masivo.
+					spawned++
+					if spawned >= 3 {
+						return
+					}
+				}
+			}
+		}
+	}
+}
