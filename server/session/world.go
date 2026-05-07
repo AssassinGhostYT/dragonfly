@@ -1341,7 +1341,7 @@ func (s *Session) handleRuntimeID(e *world.EntityHandle) uint64 {
 	if id, ok := s.entityRuntimeIDs[e]; ok {
 		return id
 	}
-	s.conf.Log.Debug("entity runtime ID not found", "UUID", e.UUID().String())
+	// s.conf.Log.Debug("entity runtime ID not found", "UUID", e.UUID().String())
 	return 0
 }
 
