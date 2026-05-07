@@ -182,7 +182,7 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 				}
 
 				if normal != nil {
-					e.tx.SetBlock(checkPos, normal, nil)
+					e.tx.SetBlock(checkPos, block.Air{}, nil)
 					e.tx.AddParticle(checkPos.Vec3Centre(), particle.LargeSmoke{})
 					opts := world.EntitySpawnOpts{Position: checkPos.Vec3Centre()}
 					e.tx.AddEntity(NewSilverfish(opts))
