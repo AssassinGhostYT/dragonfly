@@ -80,9 +80,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		s.Hurt(1.0, SuffocationDamageSource{})
 	}
 
-	// Optimize player detection by searching only in a small box around the silverfish.
-	attackBox := cube.Box(-1.2, -1.2, -1.2, 1.2, 1.2, 1.2).Translate(e.Position())
-	for player := range tx.EntitiesWithin(attackBox) {
+	for player := range tx.Players() {
 		if p, ok := player.(interface {
 			GameMode() world.GameMode
 			Hurt(damage float64, src world.DamageSource) (n float64, v bool)
