@@ -92,7 +92,9 @@ func (e EntityBridge) ID() int64 {
 }
 
 func (e EntityBridge) IsPlayer() bool {
-	if p, ok := e.E.(interface { GameMode() world.GameMode }); ok {
+	if p, ok := e.E.(interface {
+		GameMode() world.GameMode
+	}); ok {
 		return p.GameMode().AllowsTakingDamage()
 	}
 	return false
