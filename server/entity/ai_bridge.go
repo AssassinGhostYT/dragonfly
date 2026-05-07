@@ -70,14 +70,9 @@ func (e EntityBridge) SetPosition(pos [3]float64) {
 
 		dist := mgl64.Vec3{dx, dy, dz}.Len()
 		if dist > 0 {
+			// Mojang Spec: Speed 0.25. Normalizamos la dirección y aplicamos la velocidad.
 			f := 0.25
 			ent.data.Vel = mgl64.Vec3{(dx / dist) * f, ent.data.Vel.Y(), (dz / dist) * f}
-			
-			// Lógica de salto/escalado: si hay un bloque delante, aplicamos velocidad vertical.
-			// Según la wiki, los Silverfish escalan paredes.
-			if dist < 0.5 && dy > 0 {
-				ent.data.Vel = mgl64.Vec3{ent.data.Vel.X(), 0.3, ent.data.Vel.Z()}
-			}
 		}
 	}
 }
