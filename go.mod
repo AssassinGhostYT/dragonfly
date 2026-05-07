@@ -1,9 +1,9 @@
 module github.com/df-mc/dragonfly
 
-go 1.26.0
+go 1.24.2
 
 require (
-	github.com/AssassinGhostYT/MobsX-MC v0.0.0-20260507023430-a4b8ff8affac
+	github.com/AssassinGhostYT/MobsX-MC v0.0.0-20260507054333-976f2c5eecbb
 	github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/df-mc/goleveldb v1.1.9

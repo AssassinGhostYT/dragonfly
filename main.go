@@ -101,7 +101,7 @@ func (h *GlobalHandler) HandleBlockBreak(ctx *player.Context, pos cube.Pos, drop
 			if !h.hasSilkTouch(held) {
 				opts := world.EntitySpawnOpts{Position: pos.Vec3Centre()}
 				p.Tx().AddEntity(entity.NewSilverfish(opts))
-				p.Tx().AddParticle(pos.Vec3Centre(), particle.Cloud{})
+				p.Tx().AddParticle(pos.Vec3Centre(), particle.SnowballPoof{})
 			}
 		}
 	}

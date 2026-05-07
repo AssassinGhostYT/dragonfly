@@ -352,16 +352,6 @@ func (s *Session) ViewSleepingPlayers(sleeping, max int) {
 // ViewParticle ...
 func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 	switch pa := p.(type) {
-	case particle.Cloud:
-		s.writePacket(&packet.LevelEvent{
-			EventType: packet.LevelEventParticleLegacyEvent | 2, // ID 2: Large Smoke
-			Position:  vec64To32(pos),
-		})
-	case particle.Death:
-		s.writePacket(&packet.LevelEvent{
-			EventType: packet.LevelEventParticleLegacyEvent | 15, // ID 15: Poof (Death)
-			Position:  vec64To32(pos),
-		})
 	case particle.DragonEggTeleport:
 		xSign, ySign, zSign := 0, 0, 0
 		if pa.Diff.X() < 0 {
@@ -882,38 +872,6 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, disableRelative bool)
 			Volume:    1,
 			Pitch:     1.0,
 		})
-	case sound.SilverfishAmbient:
-		s.writePacket(&packet.PlaySound{
-			SoundName: "mob.silverfish.say",
-			Position:  vec64To32(pos),
-			Volume:    1,
-			Pitch:     1.0,
-		})
-		return
-	case sound.SilverfishHurt:
-		s.writePacket(&packet.PlaySound{
-			SoundName: "mob.silverfish.hit",
-			Position:  vec64To32(pos),
-			Volume:    1,
-			Pitch:     1.0,
-		})
-		return
-	case sound.SilverfishDeath:
-		s.writePacket(&packet.PlaySound{
-			SoundName: "mob.silverfish.kill",
-			Position:  vec64To32(pos),
-			Volume:    1,
-			Pitch:     1.0,
-		})
-		return
-	case sound.SilverfishStep:
-		s.writePacket(&packet.PlaySound{
-			SoundName: "mob.silverfish.step",
-			Position:  vec64To32(pos),
-			Volume:    0.5,
-			Pitch:     1.0,
-		})
-		return
 	}
 	s.writePacket(pk)
 }

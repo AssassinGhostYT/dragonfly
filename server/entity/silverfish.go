@@ -13,7 +13,6 @@ import (
 	"math/rand"
 )
 
-// Silverfish is a small insect-like hostile mob.
 type Silverfish struct {
 	brain     *mobsx.Brain
 	navigator *mobsx.Navigator
@@ -24,18 +23,16 @@ type Silverfish struct {
 	alerted *behavior.CallForHelpBehavior
 }
 
-// NewSilverfish creates a new Silverfish entity handle.
 func NewSilverfish(opts world.EntitySpawnOpts) *world.EntityHandle {
-	return opts.New(SilverfishType, Silverfish{health: 8})
+	s := &Silverfish{health: 8}
+	return opts.New(SilverfishType, s)
 }
 
-// Apply ...
-func (s Silverfish) Apply(data *world.EntityData) {
-	s.mc = &MovementComputer{Gravity: 0.08, Drag: 0.02}
-	data.Data = &s
+func (s *Silverfish) Apply(data *world.EntityData) {
+	s.mc = &MovementComputer{Gravity: 0.08, Drag: 0.02, StepHeight: 1.0}
+	data.Data = s
 }
 
-// Tick ...
 func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 	s.self = e
 	if s.Dead() {
@@ -46,7 +43,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		s.brain = mobsx.NewBrain()
 		wBridge := worldBridge{E: e}
 		s.navigator = mobsx.NewNavigator(EntityBridge{E: e, tx: tx}, wBridge)
-		s.navigator.Speed = 0.20 // Slightly slower to help hit detection
+		s.navigator.Speed = 0.25
 
 		playerScanner := &sensor.PlayerSensor{Range: 16}
 		s.alerted = &behavior.CallForHelpBehavior{RangeX: 21, RangeY: 11, RangeZ: 21}
@@ -61,12 +58,10 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		s.brain.AddBehavior(behavior.NewWander(s.navigator, 10))
 	}
 
-	// Dynamic world sync
 	wBridge := worldBridge{E: e}
 	s.navigator.Sync(wBridge)
 	s.brain.Tick(EntityBridge{E: e, tx: tx}, wBridge)
 
-	// Environmental damage (Lava, Fire, Suffocation)
 	pos := cube.PosFromVec3(e.Position())
 	b := tx.Block(pos)
 	
@@ -81,7 +76,6 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		s.Hurt(1.0, SuffocationDamageSource{})
 	}
 
-	// Attack logic
 	for player := range tx.Players() {
 		if p, ok := player.(interface {
 			GameMode() world.GameMode
@@ -113,7 +107,6 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 	return m
 }
 
-// SilverfishType ...
 var SilverfishType silverfishType
 
 type silverfishType struct{}
@@ -123,16 +116,15 @@ func (t silverfishType) Open(tx *world.Tx, handle *world.EntityHandle, data *wor
 }
 func (silverfishType) EncodeEntity() string { return "minecraft:silverfish" }
 
-// BBox: Slightly taller for server-side hit detection (Width 0.4, Height 0.5, Length 0.5)
 func (silverfishType) BBox(world.Entity) cube.BBox {
 	return cube.Box(-0.2, 0, -0.25, 0.2, 0.5, 0.25)
 }
 func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
-	Silverfish{health: 8}.Apply(data)
+	s := &Silverfish{health: 8}
+	s.Apply(data)
 }
 func (silverfishType) EncodeNBT(*world.EntityData) map[string]any { return nil }
 
-// Living methods
 func (s *Silverfish) Health() float64    { return s.health }
 func (s *Silverfish) MaxHealth() float64 { return 8 }
 func (s *Silverfish) SetMaxHealth(v float64) { s.health = v }
@@ -159,11 +151,7 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 func (s *Silverfish) Heal(health float64, src world.HealingSource) { s.health += health }
 func (s *Silverfish) KnockBack(src mgl64.Vec3, f, h float64) {
 	if s.self == nil { return }
-	pos := mgl64.Vec2{s.self.data.Pos.X(), s.self.data.Pos.Z()}.Sub(mgl64.Vec2{src.X(), src.Z()})
-	if len := pos.Len(); len > 0 {
-		pos = pos.Mul(f / len)
-	}
-	s.self.data.Vel = mgl64.Vec3{pos.X(), h, pos.Y()}
+	s.self.data.Vel = s.mc.KnockBack(src, f, h, s.self.data.Pos)
 }
 func (s *Silverfish) Velocity() mgl64.Vec3 { return mgl64.Vec3{} }
 func (s *Silverfish) SetVelocity(v mgl64.Vec3) {}
