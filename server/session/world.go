@@ -427,7 +427,7 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 		})
 	case particle.SnowballPoof:
 		s.writePacket(&packet.LevelEvent{
-			EventType: packet.LevelEventParticleLegacyEvent | 15,
+			EventType: packet.LevelEventParticleLegacyEvent | 13,
 			Position:  vec64To32(pos),
 		})
 	case particle.EggSmash:
@@ -480,7 +480,7 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 		})
 	case particle.Poof:
 		s.writePacket(&packet.LevelEvent{
-			EventType: packet.LevelEventParticleLegacyEvent | 15,
+			EventType: packet.LevelEventParticleLegacyEvent | 13,
 			Position:  vec64To32(pos),
 		})
 	case particle.LargeSmoke:

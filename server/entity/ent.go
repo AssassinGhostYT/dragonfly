@@ -3,6 +3,7 @@ package entity
 import (
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/entity/effect"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
 	"sync"
@@ -93,19 +94,69 @@ func (e *Ent) MaxHealth() float64 {
 	return 0
 }
 
+// SetMaxHealth propagates the set max health behaviour of the underlying Behaviour.
+func (e *Ent) SetMaxHealth(v float64) {
+	if l, ok := e.Behaviour().(interface{ SetMaxHealth(float64) }); ok {
+		l.SetMaxHealth(v)
+	}
+}
+
+// Dead checks if the entity is dead.
+func (e *Ent) Dead() bool {
+	if l, ok := e.Behaviour().(interface{ Dead() bool }); ok {
+		return l.Dead()
+	}
+	return false
+}
+
+// Speed returns the speed of the entity.
+func (e *Ent) Speed() float64 {
+	if l, ok := e.Behaviour().(interface{ Speed() float64 }); ok {
+		return l.Speed()
+	}
+	return 0
+}
+
+// SetSpeed sets the speed of the entity.
+func (e *Ent) SetSpeed(v float64) {
+	if l, ok := e.Behaviour().(interface{ SetSpeed(float64) }); ok {
+		l.SetSpeed(v)
+	}
+}
+
+// AddEffect adds an effect to the entity.
+func (e *Ent) AddEffect(eff effect.Effect) {
+	if l, ok := e.Behaviour().(interface{ AddEffect(effect.Effect) }); ok {
+		l.AddEffect(eff)
+	}
+}
+
+// RemoveEffect removes an effect from the entity.
+func (e *Ent) RemoveEffect(eff effect.Type) {
+	if l, ok := e.Behaviour().(interface{ RemoveEffect(effect.Type) }); ok {
+		l.RemoveEffect(eff)
+	}
+}
+
+// Effects returns the effects of the entity.
+func (e *Ent) Effects() []effect.Effect {
+	if l, ok := e.Behaviour().(interface{ Effects() []effect.Effect }); ok {
+		return l.Effects()
+	}
+	return nil
+}
+
 // Position returns the current position of the entity.
 func (e *Ent) Position() mgl64.Vec3 {
 	return e.data.Pos
 }
 
-// Velocity returns the current velocity of the entity. The values in the Vec3 returned represent the speed on
-// that axis in blocks/tick.
+// Velocity returns the current velocity of the entity.
 func (e *Ent) Velocity() mgl64.Vec3 {
 	return e.data.Vel
 }
 
-// SetVelocity sets the velocity of the entity. The values in the Vec3 passed represent the speed on
-// that axis in blocks/tick.
+// SetVelocity sets the velocity of the entity.
 func (e *Ent) SetVelocity(v mgl64.Vec3) {
 	e.data.Vel = v
 }
@@ -162,6 +213,7 @@ func (e *Ent) SetNameTag(s string) {
 // Tick ticks Ent, progressing its lifetime and closing the entity if it is
 // in the void.
 func (e *Ent) Tick(tx *world.Tx, current int64) {
+	e.tx = tx
 	y := e.data.Pos[1]
 	if y < float64(tx.Range()[0]) && current%10 == 0 {
 		_ = e.Close()

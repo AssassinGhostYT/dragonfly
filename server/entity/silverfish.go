@@ -6,6 +6,7 @@ import (
 	"github.com/AssassinGhostYT/MobsX-MC/sensor"
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/entity/effect"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/df-mc/dragonfly/server/world/particle"
 	"github.com/df-mc/dragonfly/server/world/sound"
@@ -124,7 +125,7 @@ func (t silverfishType) Open(tx *world.Tx, handle *world.EntityHandle, data *wor
 func (silverfishType) EncodeEntity() string { return "minecraft:silverfish" }
 
 func (silverfishType) BBox(world.Entity) cube.BBox {
-	return cube.Box(-0.2, 0, -0.25, 0.2, 0.5, 0.25)
+	return cube.Box(-0.15, 0, -0.15, 0.15, 0.3, 0.15)
 }
 func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
 	s := &Silverfish{health: 8}
@@ -170,13 +171,13 @@ func (s *Silverfish) KnockBack(src mgl64.Vec3, f, h float64) {
 	}
 	s.self.data.Vel = s.mc.KnockBack(src, f, h, s.self.data.Pos)
 }
-func (s *Silverfish) Velocity() mgl64.Vec3     { return mgl64.Vec3{} }
-func (s *Silverfish) SetVelocity(v mgl64.Vec3) {}
+func (s *Silverfish) Velocity() mgl64.Vec3     { return s.self.data.Vel }
+func (s *Silverfish) SetVelocity(v mgl64.Vec3) { s.self.data.Vel = v }
 func (s *Silverfish) Speed() float64           { return 0.25 }
 func (s *Silverfish) SetSpeed(v float64)       {}
-func (s *Silverfish) AddEffect(e any)          {}
-func (s *Silverfish) RemoveEffect(e any)       {}
-func (s *Silverfish) Effects() []any           { return nil }
+func (s *Silverfish) AddEffect(e effect.Effect) {}
+func (s *Silverfish) RemoveEffect(e effect.Type) {}
+func (s *Silverfish) Effects() []effect.Effect { return nil }
 func (s *Silverfish) PistonImmovable() bool    { return false }
 func (s *Silverfish) PistonBreakable() bool    { return false }
 
