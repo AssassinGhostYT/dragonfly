@@ -105,9 +105,9 @@ func (t silverfishType) Open(tx *world.Tx, handle *world.EntityHandle, data *wor
 }
 func (silverfishType) EncodeEntity() string { return "minecraft:silverfish" }
 
-// Mojang Spec: Height 0.3, Width 0.4
+// Mojang Spec: Height 0.3, Width 0.4, Length 0.5
 func (silverfishType) BBox(world.Entity) cube.BBox {
-	return cube.Box(-0.2, 0, -0.2, 0.2, 0.3, 0.2)
+	return cube.Box(-0.2, 0, -0.25, 0.2, 0.3, 0.25)
 }
 func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
 	Silverfish{health: 8}.Apply(data)
