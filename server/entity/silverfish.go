@@ -47,7 +47,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 
 		playerScanner := &sensor.PlayerSensor{Range: 16}
 		s.alerted = &behavior.CallForHelpBehavior{RangeX: 21, RangeY: 11, RangeZ: 21}
-		
+
 		attack := behavior.NewAttack(playerScanner, s.navigator)
 		attack.AttackRange = 0.8
 
@@ -64,14 +64,14 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 
 	pos := cube.PosFromVec3(e.Position())
 	b := tx.Block(pos)
-	
+
 	if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
 		name, _ := n.EncodeBlock()
 		if name == "minecraft:lava" || name == "minecraft:flowing_lava" {
-			s.Hurt(4.0, block.FireDamageSource{}) 
+			s.Hurt(4.0, block.FireDamageSource{})
 		}
 	}
-	
+
 	if len(b.Model().BBox(pos, tx)) > 0 {
 		s.Hurt(1.0, SuffocationDamageSource{})
 	}
