@@ -476,16 +476,6 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 			EventType: packet.LevelEventParticleLegacyEvent | 10,
 			Position:  vec64To32(pos),
 		})
-	case particle.Poof:
-		s.writePacket(&packet.LevelEvent{
-			EventType: packet.LevelEventParticleLegacyEvent | 13,
-			Position:  vec64To32(pos),
-		})
-	case particle.LargeSmoke:
-		s.writePacket(&packet.LevelEvent{
-			EventType: packet.LevelEventParticleLegacyEvent | 12,
-			Position:  vec64To32(pos),
-		})
 	case particle.DustPlume:
 		s.writePacket(&packet.LevelEvent{
 			EventType: packet.LevelEventParticleLegacyEvent | 88,
