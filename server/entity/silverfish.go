@@ -19,7 +19,7 @@ type Silverfish struct {
 	mc        *MovementComputer
 	self      *Ent
 
-	health   float64
+	health  float64
 	alerted *behavior.CallForHelpBehavior
 }
 
@@ -65,7 +65,9 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 	pos := cube.PosFromVec3(e.Position())
 	b := tx.Block(pos)
 
-	if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
+	if n, ok := b.(interface {
+		EncodeBlock() (string, map[string]any)
+	}); ok {
 		name, _ := n.EncodeBlock()
 		if name == "minecraft:lava" || name == "minecraft:flowing_lava" {
 			s.Hurt(4.0, block.FireDamageSource{})
@@ -125,10 +127,10 @@ func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
 }
 func (silverfishType) EncodeNBT(*world.EntityData) map[string]any { return nil }
 
-func (s *Silverfish) Health() float64    { return s.health }
-func (s *Silverfish) MaxHealth() float64 { return 8 }
+func (s *Silverfish) Health() float64        { return s.health }
+func (s *Silverfish) MaxHealth() float64     { return 8 }
 func (s *Silverfish) SetMaxHealth(v float64) { s.health = v }
-func (s *Silverfish) Dead() bool { return s.health <= 0 }
+func (s *Silverfish) Dead() bool             { return s.health <= 0 }
 func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v bool) {
 	if s.Dead() {
 		return 0, false
@@ -150,15 +152,17 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 }
 func (s *Silverfish) Heal(health float64, src world.HealingSource) { s.health += health }
 func (s *Silverfish) KnockBack(src mgl64.Vec3, f, h float64) {
-	if s.self == nil { return }
+	if s.self == nil {
+		return
+	}
 	s.self.data.Vel = s.mc.KnockBack(src, f, h, s.self.data.Pos)
 }
-func (s *Silverfish) Velocity() mgl64.Vec3 { return mgl64.Vec3{} }
+func (s *Silverfish) Velocity() mgl64.Vec3     { return mgl64.Vec3{} }
 func (s *Silverfish) SetVelocity(v mgl64.Vec3) {}
-func (s *Silverfish) Speed() float64     { return 0.25 }
-func (s *Silverfish) SetSpeed(v float64) {}
-func (s *Silverfish) AddEffect(e any)    {}
-func (s *Silverfish) RemoveEffect(e any) {}
-func (s *Silverfish) Effects() []any     { return nil }
-func (s *Silverfish) PistonImmovable() bool { return false }
-func (s *Silverfish) PistonBreakable() bool { return false }
+func (s *Silverfish) Speed() float64           { return 0.25 }
+func (s *Silverfish) SetSpeed(v float64)       {}
+func (s *Silverfish) AddEffect(e any)          {}
+func (s *Silverfish) RemoveEffect(e any)       {}
+func (s *Silverfish) Effects() []any           { return nil }
+func (s *Silverfish) PistonImmovable() bool    { return false }
+func (s *Silverfish) PistonBreakable() bool    { return false }
