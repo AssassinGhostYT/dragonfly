@@ -46,7 +46,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		s.brain = mobsx.NewBrain()
 		wBridge := worldBridge{E: e}
 		s.navigator = mobsx.NewNavigator(EntityBridge{E: e, tx: tx}, wBridge)
-		s.navigator.Speed = 0.25
+		s.navigator.Speed = 0.20 // Slightly slower to help hit detection
 
 		playerScanner := &sensor.PlayerSensor{Range: 16}
 		s.alerted = &behavior.CallForHelpBehavior{RangeX: 21, RangeY: 11, RangeZ: 21}
@@ -81,19 +81,6 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		s.Hurt(1.0, SuffocationDamageSource{})
 	}
 
-	// Auto-jump logic for StepHeight 1.0
-	if s.mc.OnGround() {
-		// If we are moving and there's a block in front, jump.
-		if e.Velocity().LenSqr() > 0.001 {
-			// Check block at feet level in movement direction
-			vel := e.Velocity().Normalize()
-			frontPos := pos.Add(cube.Pos{int(vel.X() * 1.2), 0, int(vel.Z() * 1.2)})
-			if tx.Block(frontPos).Model().FaceSolid(frontPos, cube.FaceDown, tx) {
-				e.data.Vel = mgl64.Vec3{e.data.Vel.X(), 0.35, e.data.Vel.Z()}
-			}
-		}
-	}
-
 	// Attack logic
 	for player := range tx.Players() {
 		if p, ok := player.(interface {
@@ -103,7 +90,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		}); ok {
 			if p.GameMode().AllowsTakingDamage() {
 				dist := p.Position().Sub(e.Position()).Len()
-				if dist < 1.0 {
+				if dist < 0.9 {
 					dmg := 1.0
 					if tx.World().Difficulty() == world.DifficultyHard {
 						dmg = 1.5
@@ -136,9 +123,9 @@ func (t silverfishType) Open(tx *world.Tx, handle *world.EntityHandle, data *wor
 }
 func (silverfishType) EncodeEntity() string { return "minecraft:silverfish" }
 
-// BBox: Slightly larger to facilitate hitting (Width 0.6, Height 0.4)
+// BBox: Slightly taller for server-side hit detection (Width 0.4, Height 0.5, Length 0.5)
 func (silverfishType) BBox(world.Entity) cube.BBox {
-	return cube.Box(-0.3, 0, -0.3, 0.3, 0.4, 0.3)
+	return cube.Box(-0.2, 0, -0.25, 0.2, 0.5, 0.25)
 }
 func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
 	Silverfish{health: 8}.Apply(data)
@@ -161,7 +148,7 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 		}
 	}
 	if s.health <= 0 && s.self != nil {
-		s.self.tx.AddParticle(s.self.Position(), particle.Cloud{})
+		s.self.tx.AddParticle(s.self.Position(), particle.Death{})
 		for _, handle := range NewExperienceOrbs(s.self.Position(), 5) {
 			s.self.tx.AddEntity(handle)
 		}

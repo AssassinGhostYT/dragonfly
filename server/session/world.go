@@ -352,9 +352,14 @@ func (s *Session) ViewSleepingPlayers(sleeping, max int) {
 // ViewParticle ...
 func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 	switch pa := p.(type) {
-	case particle.Cloud, particle.Death:
+	case particle.Cloud:
 		s.writePacket(&packet.LevelEvent{
-			EventType: packet.LevelEventParticleLegacyEvent | 20,
+			EventType: packet.LevelEventParticleLegacyEvent | 2, // ID 2: Large Smoke
+			Position:  vec64To32(pos),
+		})
+	case particle.Death:
+		s.writePacket(&packet.LevelEvent{
+			EventType: packet.LevelEventParticleLegacyEvent | 15, // ID 15: Poof (Death)
 			Position:  vec64To32(pos),
 		})
 	case particle.DragonEggTeleport:
