@@ -8,7 +8,6 @@ import (
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/df-mc/dragonfly/server/world/particle"
 	"github.com/go-gl/mathgl/mgl64"
-	"unsafe"
 )
 
 // worldBridge implements MobsX-MC api.World.
@@ -17,14 +16,12 @@ type worldBridge struct {
 }
 
 func (w worldBridge) Block(pos mmath.Pos) api.Block {
-	// Obtenemos la transacción actual de la entidad. Dragonfly actualiza w.E.tx en cada tick.
 	b := w.E.tx.Block(cube.Pos{pos.X(), pos.Y(), pos.Z()})
 	return blockBridge{b: b}
 }
 
 func (w worldBridge) Entities() []api.Entity {
 	var ents []api.Entity
-	// Escaneamos todas las entidades para que la IA vea a los jugadores.
 	for e := range w.E.tx.Entities() {
 		ents = append(ents, EntityBridge{E: e, tx: w.E.tx})
 	}
@@ -72,7 +69,6 @@ func (e EntityBridge) SetPosition(pos [3]float64) {
 
 		dist := mgl64.Vec3{dx, dy, dz}.Len()
 		if dist > 0 {
-			// Aplicamos velocidad normalizada.
 			f := 0.25
 			ent.data.Vel = mgl64.Vec3{(dx / dist) * f, dy, (dz / dist) * f}
 		}
@@ -91,13 +87,17 @@ func (e EntityBridge) SetRotation(yaw, pitch float32) {
 }
 
 func (e EntityBridge) ID() int64 {
-	// Usamos la dirección de memoria del handle como ID único y ultraestable.
-	return int64(uintptr(unsafe.Pointer(e.E.H())))
+	// IMPORTANTE: Devolvemos el EntityUniqueID real de Dragonfly.
+	// Esto es vital para que el cliente reconozca el bicho para pegarle.
+	return e.E.H().RuntimeID()
 }
 
 func (e EntityBridge) IsPlayer() bool {
-	_, ok := e.E.(interface{ GameMode() world.GameMode })
-	return ok
+	// Verificamos si es un jugador Y si está en un modo de juego atacable.
+	if p, ok := e.E.(interface{ GameMode() world.GameMode }); ok {
+		return p.GameMode().AllowsTakingDamage()
+	}
+	return false
 }
 
 func (e EntityBridge) HideInBlock(pos mmath.Pos) {
@@ -126,7 +126,6 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 
 		if infested != nil {
 			e.tx.SetBlock(cube.Pos{pos.X(), pos.Y(), pos.Z()}, infested, nil)
-			// Efecto visual de "poof" (humo blanco suave)
 			e.tx.AddParticle(cube.Pos{pos.X(), pos.Y(), pos.Z()}.Vec3Centre(), particle.SnowballPoof{})
 			ent.Close()
 		}
@@ -167,9 +166,7 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 
 				if normal != nil {
 					e.tx.SetBlock(checkPos, normal, nil)
-					// Efecto visual de "poof" (humo blanco suave)
 					e.tx.AddParticle(checkPos.Vec3Centre(), particle.SnowballPoof{})
-
 					opts := world.EntitySpawnOpts{Position: checkPos.Vec3Centre()}
 					e.tx.AddEntity(NewSilverfish(opts))
 
