@@ -101,9 +101,11 @@ func (h *GlobalHandler) HandleBlockBreak(ctx *player.Context, pos cube.Pos, drop
 			// Si no tiene Silk Touch (Toque de Seda), spawneamos el Silverfish.
 			held, _ := p.HeldItems()
 			if !h.hasSilkTouch(held) {
+				ctx.Cancel()
+				p.Tx().SetBlock(pos, nil, nil)
 				opts := world.EntitySpawnOpts{Position: pos.Vec3Centre()}
 				p.Tx().AddEntity(entity.NewSilverfish(opts))
-				for i := 0; i < 5; i++ {
+				for i := 0; i < 8; i++ {
 					p.Tx().AddParticle(pos.Vec3Centre(), particle.LargeSmoke{})
 				}
 			}
