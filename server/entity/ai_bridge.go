@@ -69,11 +69,10 @@ func (e EntityBridge) SetPosition(pos [3]float64) {
 	if ent, ok := e.E.(*Ent); ok {
 		current := ent.data.Pos
 		dx, dy, dz := pos[0]-current.X(), pos[1]-current.Y(), pos[2]-current.Z()
-		
+
 		dist := mgl64.Vec3{dx, dy, dz}.Len()
 		if dist > 0 {
-			// Mojang Spec: Speed 0.25. Normalizamos la dirección y aplicamos la velocidad.
-			// Usamos un factor para que el movimiento sea suave pero firme.
+			// Aplicamos velocidad normalizada.
 			f := 0.25
 			ent.data.Vel = mgl64.Vec3{(dx / dist) * f, dy, (dz / dist) * f}
 		}
@@ -97,8 +96,6 @@ func (e EntityBridge) ID() int64 {
 }
 
 func (e EntityBridge) IsPlayer() bool {
-	// Verificamos si la entidad es un jugador.
-	// En Dragonfly, los jugadores suelen ser de un tipo específico o implementar interfaces.
 	_, ok := e.E.(interface{ GameMode() world.GameMode })
 	return ok
 }
@@ -129,8 +126,8 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 
 		if infested != nil {
 			e.tx.SetBlock(cube.Pos{pos.X(), pos.Y(), pos.Z()}, infested, nil)
-			// Efecto visual de "humo" al entrar al bloque
-			e.tx.AddParticle(cube.Pos{pos.X(), pos.Y(), pos.Z()}.Vec3Centre(), particle.HugeExplosion{})
+			// Efecto visual de "poof" (humo blanco suave)
+			e.tx.AddParticle(cube.Pos{pos.X(), pos.Y(), pos.Z()}.Vec3Centre(), particle.SnowballPoof{})
 			ent.Close()
 		}
 	}
@@ -170,9 +167,9 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 
 				if normal != nil {
 					e.tx.SetBlock(checkPos, normal, nil)
-					// Efecto visual de "humo" al salir del bloque
-					e.tx.AddParticle(checkPos.Vec3Centre(), particle.HugeExplosion{})
-					
+					// Efecto visual de "poof" (humo blanco suave)
+					e.tx.AddParticle(checkPos.Vec3Centre(), particle.SnowballPoof{})
+
 					opts := world.EntitySpawnOpts{Position: checkPos.Vec3Centre()}
 					e.tx.AddEntity(NewSilverfish(opts))
 
