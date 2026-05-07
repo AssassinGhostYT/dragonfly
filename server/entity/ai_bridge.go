@@ -8,6 +8,7 @@ import (
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/df-mc/dragonfly/server/world/particle"
 	"github.com/go-gl/mathgl/mgl64"
+	"unsafe"
 )
 
 // worldBridge implements MobsX-MC api.World.
@@ -70,7 +71,13 @@ func (e EntityBridge) SetPosition(pos [3]float64) {
 		dist := mgl64.Vec3{dx, dy, dz}.Len()
 		if dist > 0 {
 			f := 0.25
-			ent.data.Vel = mgl64.Vec3{(dx / dist) * f, dy, (dz / dist) * f}
+			ent.data.Vel = mgl64.Vec3{(dx / dist) * f, ent.data.Vel.Y(), (dz / dist) * f}
+			
+			// Lógica de salto/escalado: si hay un bloque delante, aplicamos velocidad vertical.
+			// Según la wiki, los Silverfish escalan paredes.
+			if dist < 0.5 && dy > 0 {
+				ent.data.Vel = mgl64.Vec3{ent.data.Vel.X(), 0.3, ent.data.Vel.Z()}
+			}
 		}
 	}
 }
@@ -87,13 +94,11 @@ func (e EntityBridge) SetRotation(yaw, pitch float32) {
 }
 
 func (e EntityBridge) ID() int64 {
-	// IMPORTANTE: Devolvemos el EntityUniqueID real de Dragonfly.
-	// Esto es vital para que el cliente reconozca el bicho para pegarle.
-	return e.E.H().RuntimeID()
+	// Usamos un identificador único basado en el handle de la entidad.
+	return int64(uintptr(unsafe.Pointer(e.E.H())))
 }
 
 func (e EntityBridge) IsPlayer() bool {
-	// Verificamos si es un jugador Y si está en un modo de juego atacable.
 	if p, ok := e.E.(interface{ GameMode() world.GameMode }); ok {
 		return p.GameMode().AllowsTakingDamage()
 	}
