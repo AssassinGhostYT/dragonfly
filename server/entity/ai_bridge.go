@@ -141,13 +141,11 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 
 	// Alert nearby already spawned silverfish
 	for ent := range e.tx.Entities() {
-		if s, ok := ent.(interface{ H() *world.EntityHandle }); ok {
-			if data, ok := e.tx.EntityData(s.H()); ok {
-				if silver, ok := data.Data.(*Silverfish); ok {
-					if silver.self != nil && silver.self != e.E && silver.self.Position().Sub(pos).Len() < 16 {
-						if silver.alerted != nil {
-							silver.alerted.Alerted = true
-						}
+		if s, ok := ent.(*Ent); ok {
+			if silver, ok := s.data.Data.(*Silverfish); ok {
+				if silver.self != nil && silver.self != e.E && silver.self.Position().Sub(pos).Len() < 16 {
+					if silver.alerted != nil {
+						silver.alerted.Alerted = true
 					}
 				}
 			}
