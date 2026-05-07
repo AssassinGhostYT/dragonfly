@@ -60,8 +60,6 @@ func (s *Session) ViewEntity(e world.Entity) {
 	}
 	var runtimeID uint64
 
-	_, controllable := e.(Controllable)
-
 	s.entityMutex.Lock()
 	if id, ok := s.entityRuntimeIDs[e.H()]; ok {
 		runtimeID = id
