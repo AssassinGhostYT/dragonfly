@@ -4,6 +4,7 @@ import (
 	"github.com/AssassinGhostYT/MobsX-MC"
 	"github.com/AssassinGhostYT/MobsX-MC/behavior"
 	"github.com/AssassinGhostYT/MobsX-MC/sensor"
+	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/df-mc/dragonfly/server/world/particle"
@@ -64,16 +65,19 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 	// Environmental damage (Lava, Fire, Suffocation)
 	pos := cube.PosFromVec3(e.Position())
 	b := tx.Block(pos)
-	if _, ok := b.(interface{ Liquid() }); ok { // Check for lava/water
-		if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
-			name, _ := n.EncodeBlock()
-			if name == "minecraft:lava" || name == "minecraft:flowing_lava" {
-				s.Hurt(4.0, world.FireDamageSource{}) // High damage from lava
-			}
+	
+	// Lava check
+	if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
+		name, _ := n.EncodeBlock()
+		if name == "minecraft:lava" || name == "minecraft:flowing_lava" {
+			s.Hurt(4.0, block.FireDamageSource{}) 
 		}
-	} else if b.Solid() {
-		// Suffocation
-		s.Hurt(1.0, world.SuffocationDamageSource{})
+	}
+	
+	// Suffocation check: if the block at the entity's head/body is solid.
+	// We use the block's model to see if it has any bounding boxes (meaning it's not air/liquid).
+	if len(b.Model().BBox(pos, tx)) > 0 {
+		s.Hurt(1.0, SuffocationDamageSource{})
 	}
 
 	// Attack logic
