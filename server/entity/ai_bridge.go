@@ -69,8 +69,13 @@ func (e EntityBridge) SetPosition(pos [3]float64) {
 		current := ent.data.Pos
 		dx, dy, dz := pos[0]-current.X(), pos[1]-current.Y(), pos[2]-current.Z()
 		
-		// Aplicamos velocidad limitada.
-		ent.data.Vel = mgl64.Vec3{dx, dy, dz}
+		dist := mgl64.Vec3{dx, dy, dz}.Len()
+		if dist > 0 {
+			// Mojang Spec: Speed 0.25. Normalizamos la dirección y aplicamos la velocidad.
+			// Usamos un factor para que el movimiento sea suave pero firme.
+			f := 0.25
+			ent.data.Vel = mgl64.Vec3{(dx / dist) * f, dy, (dz / dist) * f}
+		}
 	}
 }
 
