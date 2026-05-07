@@ -147,9 +147,6 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 			s.alerted.Alerted = true
 		}
 		if s.self != nil {
-			for i := 0; i < 5; i++ {
-				s.self.tx.AddParticle(s.self.Position(), particle.Evaporate{})
-			}
 			for _, v := range s.self.tx.Viewers(s.self.Position()) {
 				v.ViewEntityAction(s.self, HurtAction{})
 			}
