@@ -120,7 +120,6 @@ func (c *MovementComputer) checkCollision(tx *world.Tx, e world.Entity, pos, vel
 		for _, blockBBox := range blocks {
 			deltaZ = entityBBox.ZOffset(blockBBox, deltaZ)
 		}
-		entityBBox = entityBBox.Translate(mgl64.Vec3{0, 0, deltaZ})
 	}
 
 	if c.StepHeight > 0 && c.onGround && (origX != deltaX || origZ != deltaZ) {
@@ -129,7 +128,7 @@ func (c *MovementComputer) checkCollision(tx *world.Tx, e world.Entity, pos, vel
 
 		deltaY = c.StepHeight
 		blocks = blockBBoxsAround(tx, oldBBox.Extend(mgl64.Vec3{origX, deltaY, origZ}))
-		
+
 		stepBBox := oldBBox
 		for _, blockBBox := range blocks {
 			deltaY = stepBBox.YOffset(blockBBox, deltaY)

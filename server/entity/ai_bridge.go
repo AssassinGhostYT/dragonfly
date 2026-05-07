@@ -92,7 +92,7 @@ func (e EntityBridge) ID() int64 {
 }
 
 func (e EntityBridge) IsPlayer() bool {
-	if p, ok := e.E.(interface{ GameMode() world.GameMode }); ok {
+	if p, ok := e.E.(interface { GameMode() world.GameMode }); ok {
 		return p.GameMode().AllowsTakingDamage()
 	}
 	return false
@@ -102,7 +102,7 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 	if ent, ok := e.E.(*Ent); ok {
 		b := e.tx.Block(cube.Pos{pos.X(), pos.Y(), pos.Z()})
 		var infested world.Block
-		if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
+		if n, ok := b.(interface { EncodeBlock() (string, map[string]any) }); ok {
 			name, _ := n.EncodeBlock()
 			switch name {
 			case "minecraft:stone":
@@ -142,7 +142,7 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 				b := e.tx.Block(checkPos)
 
 				var normal world.Block
-				if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
+				if n, ok := b.(interface { EncodeBlock() (string, map[string]any) }); ok {
 					name, _ := n.EncodeBlock()
 					switch name {
 					case "minecraft:infested_stone":

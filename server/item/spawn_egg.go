@@ -21,14 +21,14 @@ func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, 
 		return false
 	}
 	opts := world.EntitySpawnOpts{Position: pos.Side(face).Vec3Middle()}
-	
+
 	name := s.Entity.EncodeEntity()
 	if name == "minecraft:silverfish" && NewSilverfish != nil {
 		tx.AddEntity(NewSilverfish(opts))
 		ctx.SubtractFromCount(1)
 		return true
 	}
-	
+
 	return false
 }
 
