@@ -10,6 +10,7 @@ import (
 	"github.com/df-mc/dragonfly/server/world/particle"
 	"github.com/df-mc/dragonfly/server/world/sound"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/google/uuid"
 	"math/rand"
 )
 
@@ -140,9 +141,15 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 		if s.alerted != nil {
 			s.alerted.Alerted = true
 		}
+		for _, v := range s.self.tx.Viewers(s.self.Position()) {
+			v.ViewEntityAction(s.self, HurtAction{})
+		}
 	}
 	if s.health <= 0 && s.self != nil {
-		s.self.tx.AddParticle(s.self.Position(), particle.SnowballPoof{})
+		s.self.tx.AddParticle(s.self.Position(), particle.LargeSmoke{})
+		for _, v := range s.self.tx.Viewers(s.self.Position()) {
+			v.ViewEntityAction(s.self, DeathAction{})
+		}
 		for _, handle := range NewExperienceOrbs(s.self.Position(), 5) {
 			s.self.tx.AddEntity(handle)
 		}
@@ -166,3 +173,13 @@ func (s *Silverfish) RemoveEffect(e any)       {}
 func (s *Silverfish) Effects() []any           { return nil }
 func (s *Silverfish) PistonImmovable() bool    { return false }
 func (s *Silverfish) PistonBreakable() bool    { return false }
+
+// UUID returns the unique identifier of the entity.
+func (s *Silverfish) UUID() uuid.UUID {
+	return s.self.H().UUID()
+}
+
+// DeathPosition returns the death position, dimension and whether the entity died.
+func (s *Silverfish) DeathPosition() (mgl64.Vec3, world.Dimension, bool) {
+	return s.self.Position(), s.self.tx.World().Dimension(), s.Dead()
+}

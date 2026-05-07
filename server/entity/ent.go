@@ -49,6 +49,50 @@ func (e *Ent) Explode(src mgl64.Vec3, impact float64, conf block.ExplosionConfig
 	}
 }
 
+// Hurt propagates the hurt behaviour of the underlying Behaviour.
+func (e *Ent) Hurt(damage float64, src world.DamageSource) (float64, bool) {
+	if hurt, ok := e.Behaviour().(interface {
+		Hurt(damage float64, src world.DamageSource) (float64, bool)
+	}); ok {
+		return hurt.Hurt(damage, src)
+	}
+	return 0, false
+}
+
+// Heal propagates the heal behaviour of the underlying Behaviour.
+func (e *Ent) Heal(health float64, src world.HealingSource) {
+	if heal, ok := e.Behaviour().(interface {
+		Heal(health float64, src world.HealingSource)
+	}); ok {
+		heal.Heal(health, src)
+	}
+}
+
+// KnockBack propagates the knockback behaviour of the underlying Behaviour.
+func (e *Ent) KnockBack(src mgl64.Vec3, f, h float64) {
+	if kb, ok := e.Behaviour().(interface {
+		KnockBack(src mgl64.Vec3, f, h float64)
+	}); ok {
+		kb.KnockBack(src, f, h)
+	}
+}
+
+// Health returns the health of the entity.
+func (e *Ent) Health() float64 {
+	if l, ok := e.Behaviour().(interface{ Health() float64 }); ok {
+		return l.Health()
+	}
+	return 0
+}
+
+// MaxHealth returns the maximum health of the entity.
+func (e *Ent) MaxHealth() float64 {
+	if l, ok := e.Behaviour().(interface{ MaxHealth() float64 }); ok {
+		return l.MaxHealth()
+	}
+	return 0
+}
+
 // Position returns the current position of the entity.
 func (e *Ent) Position() mgl64.Vec3 {
 	return e.data.Pos
