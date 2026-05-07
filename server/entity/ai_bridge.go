@@ -154,48 +154,46 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 		}
 	}
 
-	// Randomized block scanning to reduce CPU load when many silverfish are alerting.
-	// We only check a subset of the volume to prevent freezing.
-	for i := 0; i < 200; i++ {
-		x := rand.Intn(rangeX+1) - rangeX/2
-		y := rand.Intn(rangeY+1) - rangeY/2
-		z := rand.Intn(rangeZ+1) - rangeZ/2
-		
-		checkPos := center.Add(cube.Pos{x, y, z})
-		b := e.tx.Block(checkPos)
+	for x := -rangeX / 2; x <= rangeX/2; x++ {
+		for y := -rangeY / 2; y <= rangeY/2; y++ {
+			for z := -rangeZ / 2; z <= rangeZ/2; z++ {
+				checkPos := center.Add(cube.Pos{x, y, z})
+				b := e.tx.Block(checkPos)
 
-		var normal world.Block
-		if n, ok := b.(interface {
-			EncodeBlock() (string, map[string]any)
-		}); ok {
-			name, _ := n.EncodeBlock()
-			switch name {
-			case "minecraft:infested_stone":
-				normal = block.Stone{}
-			case "minecraft:infested_cobblestone":
-				normal = block.Cobblestone{}
-			case "minecraft:infested_deepslate":
-				normal = block.Deepslate{}
-			case "minecraft:infested_stone_bricks":
-				normal = block.StoneBricks{Type: block.NormalStoneBricks()}
-			case "minecraft:infested_mossy_stone_bricks":
-				normal = block.StoneBricks{Type: block.MossyStoneBricks()}
-			case "minecraft:infested_cracked_stone_bricks":
-				normal = block.StoneBricks{Type: block.CrackedStoneBricks()}
-			case "minecraft:infested_chiseled_stone_bricks":
-				normal = block.StoneBricks{Type: block.ChiseledStoneBricks()}
-			}
-		}
+				var normal world.Block
+				if n, ok := b.(interface {
+					EncodeBlock() (string, map[string]any)
+				}); ok {
+					name, _ := n.EncodeBlock()
+					switch name {
+					case "minecraft:infested_stone":
+						normal = block.Stone{}
+					case "minecraft:infested_cobblestone":
+						normal = block.Cobblestone{}
+					case "minecraft:infested_deepslate":
+						normal = block.Deepslate{}
+					case "minecraft:infested_stone_bricks":
+						normal = block.StoneBricks{Type: block.NormalStoneBricks()}
+					case "minecraft:infested_mossy_stone_bricks":
+						normal = block.StoneBricks{Type: block.MossyStoneBricks()}
+					case "minecraft:infested_cracked_stone_bricks":
+						normal = block.StoneBricks{Type: block.CrackedStoneBricks()}
+					case "minecraft:infested_chiseled_stone_bricks":
+						normal = block.StoneBricks{Type: block.ChiseledStoneBricks()}
+					}
+				}
 
-		if normal != nil {
-			e.tx.SetBlock(checkPos, block.Air{}, nil)
-			e.tx.AddParticle(checkPos.Vec3Centre(), particle.Evaporate{})
-			opts := world.EntitySpawnOpts{Position: checkPos.Vec3Centre()}
-			e.tx.AddEntity(NewSilverfish(opts))
+				if normal != nil {
+					e.tx.SetBlock(checkPos, block.Air{}, nil)
+					e.tx.AddParticle(checkPos.Vec3Centre(), particle.Evaporate{})
+					opts := world.EntitySpawnOpts{Position: checkPos.Vec3Centre()}
+					e.tx.AddEntity(NewSilverfish(opts))
 
-			spawned++
-			if spawned >= 3 {
-				return
+					spawned++
+					if spawned >= 3 {
+						return
+					}
+				}
 			}
 		}
 	}
