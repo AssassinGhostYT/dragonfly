@@ -86,7 +86,9 @@ func (e EntityBridge) SetRotation(yaw, pitch float32) {
 }
 
 func (e EntityBridge) ID() int64 {
-	return int64(e.tx.EntityRuntimeID(e.E))
+	// Usamos el UUID de la entidad para generar un ID único de tipo int64.
+	uid := e.E.H().UUID()
+	return int64(uid[0]) | int64(uid[1])<<8 | int64(uid[2])<<16 | int64(uid[3])<<24 | int64(uid[4])<<32 | int64(uid[5])<<40 | int64(uid[6])<<48 | int64(uid[7])<<56
 }
 
 func (e EntityBridge) IsPlayer() bool {
