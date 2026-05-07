@@ -86,7 +86,14 @@ func (e EntityBridge) SetRotation(yaw, pitch float32) {
 }
 
 func (e EntityBridge) ID() int64 {
-	return int64(e.E.H().UUID().ID())
+	return int64(e.tx.EntityRuntimeID(e.E))
+}
+
+func (e EntityBridge) IsPlayer() bool {
+	// Verificamos si la entidad es un jugador.
+	// En Dragonfly, los jugadores suelen ser de un tipo específico o implementar interfaces.
+	_, ok := e.E.(interface{ GameMode() world.GameMode })
+	return ok
 }
 
 func (e EntityBridge) HideInBlock(pos mmath.Pos) {

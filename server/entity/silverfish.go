@@ -45,17 +45,20 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 
 		playerScanner := &sensor.PlayerSensor{Range: 16}
 		s.alerted = &behavior.CallForHelpBehavior{RangeX: 21, RangeY: 11, RangeZ: 21}
+		
+		attack := behavior.NewAttack(playerScanner, s.navigator)
+		attack.AttackRange = 0.8 // Rango de parada de la IA
 
 		s.brain.AddSensor(playerScanner)
 		s.brain.AddBehavior(s.alerted)
-		s.brain.AddBehavior(behavior.NewAttack(playerScanner, s.navigator))
-		s.brain.AddBehavior(&behavior.InfestBehavior{InfestChance: 0.05})
+		s.brain.AddBehavior(attack)
+		s.brain.AddBehavior(&behavior.InfestBehavior{InfestChance: 0.1}) // 10% de probabilidad
 		s.brain.AddBehavior(behavior.NewWander(s.navigator, 10))
 	}
 
 	wBridge := worldBridge{E: e}
 	s.navigator.Sync(wBridge)
-	s.brain.Tick(EntityBridge{E: e}, wBridge)
+	s.brain.Tick(EntityBridge{E: e, tx: tx}, wBridge)
 
 	// Attack logic: deal damage if close to a player
 	for player := range tx.Players() {
@@ -66,7 +69,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		}); ok {
 			if p.GameMode().AllowsTakingDamage() {
 				dist := p.Position().Sub(e.Position()).Len()
-				if dist < 0.7 { // Slightly increased range
+				if dist < 0.9 { // Un poco mayor que el AttackRange de la IA para asegurar golpe
 					// Mojang Spec: Easy/Normal: 1 HP, Hard: 1.5 HP
 					dmg := 1.0
 					if tx.World().Difficulty() == world.DifficultyHard {
