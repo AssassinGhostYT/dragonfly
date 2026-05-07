@@ -354,7 +354,7 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 	switch pa := p.(type) {
 	case particle.Cloud, particle.Death:
 		s.writePacket(&packet.LevelEvent{
-			EventType: packet.LevelEventParticleCloud,
+			EventType: packet.LevelEventParticleLegacyEvent | 20,
 			Position:  vec64To32(pos),
 		})
 	case particle.DragonEggTeleport:
