@@ -115,7 +115,11 @@ var SilverfishType silverfishType
 type silverfishType struct{}
 
 func (t silverfishType) Open(tx *world.Tx, handle *world.EntityHandle, data *world.EntityData) world.Entity {
-	return &Ent{tx: tx, handle: handle, data: data}
+	e := &Ent{tx: tx, handle: handle, data: data}
+	if s, ok := data.Data.(*Silverfish); ok {
+		s.self = e
+	}
+	return e
 }
 func (silverfishType) EncodeEntity() string { return "minecraft:silverfish" }
 
@@ -141,8 +145,10 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 		if s.alerted != nil {
 			s.alerted.Alerted = true
 		}
-		for _, v := range s.self.tx.Viewers(s.self.Position()) {
-			v.ViewEntityAction(s.self, HurtAction{})
+		if s.self != nil {
+			for _, v := range s.self.tx.Viewers(s.self.Position()) {
+				v.ViewEntityAction(s.self, HurtAction{})
+			}
 		}
 	}
 	if s.health <= 0 && s.self != nil {
@@ -176,10 +182,16 @@ func (s *Silverfish) PistonBreakable() bool    { return false }
 
 // UUID returns the unique identifier of the entity.
 func (s *Silverfish) UUID() uuid.UUID {
+	if s.self == nil {
+		return uuid.UUID{}
+	}
 	return s.self.H().UUID()
 }
 
 // DeathPosition returns the death position, dimension and whether the entity died.
 func (s *Silverfish) DeathPosition() (mgl64.Vec3, world.Dimension, bool) {
+	if s.self == nil {
+		return mgl64.Vec3{}, nil, s.Dead()
+	}
 	return s.self.Position(), s.self.tx.World().Dimension(), s.Dead()
 }
