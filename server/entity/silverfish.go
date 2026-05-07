@@ -51,7 +51,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		s.alerted = &behavior.CallForHelpBehavior{RangeX: 21, RangeY: 11, RangeZ: 21}
 
 		attack := behavior.NewAttack(playerScanner, s.navigator)
-		attack.AttackRange = 0.8
+		attack.AttackRange = 1.1
 
 		s.brain.AddSensor(playerScanner)
 		s.brain.AddBehavior(s.alerted)
@@ -88,7 +88,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		}); ok {
 			if p.GameMode().AllowsTakingDamage() {
 				dist := p.Position().Sub(e.Position()).Len()
-				if dist < 0.9 {
+				if dist < 1.1 {
 					dmg := 1.0
 					if tx.World().Difficulty() == world.DifficultyHard {
 						dmg = 1.5
@@ -125,7 +125,7 @@ func (t silverfishType) Open(tx *world.Tx, handle *world.EntityHandle, data *wor
 func (silverfishType) EncodeEntity() string { return "minecraft:silverfish" }
 
 func (silverfishType) BBox(world.Entity) cube.BBox {
-	return cube.Box(-0.2, 0, -0.2, 0.2, 0.3, 0.2)
+	return cube.Box(-0.23, 0, -0.23, 0.23, 0.32, 0.23)
 }
 func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
 	s := &Silverfish{health: 8}
