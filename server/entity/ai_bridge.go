@@ -128,7 +128,7 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 
 		if infested != nil {
 			e.tx.SetBlock(cube.Pos{pos.X(), pos.Y(), pos.Z()}, infested, nil)
-			e.tx.AddParticle(cube.Pos{pos.X(), pos.Y(), pos.Z()}.Vec3Centre(), particle.Poof{})
+			e.tx.AddParticle(cube.Pos{pos.X(), pos.Y(), pos.Z()}.Vec3Centre(), particle.LargeSmoke{})
 			ent.Close()
 		}
 	}
@@ -138,6 +138,21 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 	pos := e.E.Position()
 	center := cube.Pos{int(pos.X()), int(pos.Y()), int(pos.Z())}
 	spawned := 0
+
+	// Alert nearby already spawned silverfish
+	for ent := range e.tx.Entities() {
+		if s, ok := ent.(interface{ H() *world.EntityHandle }); ok {
+			if data, ok := e.tx.EntityData(s.H()); ok {
+				if silver, ok := data.Data.(*Silverfish); ok {
+					if silver.self != nil && silver.self != e.E && silver.self.Position().Sub(pos).Len() < 16 {
+						if silver.alerted != nil {
+							silver.alerted.Alerted = true
+						}
+					}
+				}
+			}
+		}
+	}
 
 	for x := -rangeX / 2; x <= rangeX/2; x++ {
 		for y := -rangeY / 2; y <= rangeY/2; y++ {
@@ -170,7 +185,7 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 
 				if normal != nil {
 					e.tx.SetBlock(checkPos, normal, nil)
-					e.tx.AddParticle(checkPos.Vec3Centre(), particle.Poof{})
+					e.tx.AddParticle(checkPos.Vec3Centre(), particle.LargeSmoke{})
 					opts := world.EntitySpawnOpts{Position: checkPos.Vec3Centre()}
 					e.tx.AddEntity(NewSilverfish(opts))
 

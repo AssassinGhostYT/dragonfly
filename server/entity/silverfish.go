@@ -125,7 +125,7 @@ func (t silverfishType) Open(tx *world.Tx, handle *world.EntityHandle, data *wor
 func (silverfishType) EncodeEntity() string { return "minecraft:silverfish" }
 
 func (silverfishType) BBox(world.Entity) cube.BBox {
-	return cube.Box(-0.15, 0, -0.15, 0.15, 0.3, 0.15)
+	return cube.Box(-0.2, 0, -0.2, 0.2, 0.3, 0.2)
 }
 func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
 	s := &Silverfish{health: 8}
@@ -147,13 +147,14 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 			s.alerted.Alerted = true
 		}
 		if s.self != nil {
+			s.self.tx.AddParticle(s.self.Position(), particle.LargeSmoke{})
 			for _, v := range s.self.tx.Viewers(s.self.Position()) {
 				v.ViewEntityAction(s.self, HurtAction{})
 			}
 		}
 	}
 	if s.health <= 0 && s.self != nil {
-		s.self.tx.AddParticle(s.self.Position(), particle.Poof{})
+		s.self.tx.AddParticle(s.self.Position(), particle.LargeSmoke{})
 		for _, v := range s.self.tx.Viewers(s.self.Position()) {
 			v.ViewEntityAction(s.self, DeathAction{})
 		}
