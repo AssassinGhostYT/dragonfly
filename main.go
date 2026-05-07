@@ -93,7 +93,7 @@ func (h *GlobalHandler) HandleBlockBreak(ctx *player.Context, pos cube.Pos, drop
 	b := p.Tx().Block(pos)
 
 	// Verificamos si el bloque es infestado por su nombre codificado.
-	if n, ok := b.(interface { EncodeBlock() (string, map[string]any) }); ok {
+	if n, ok := b.(interface {\n\t\tEncodeBlock() (string, map[string]any)\n\t}); ok {
 		name, _ := n.EncodeBlock()
 		if strings.HasPrefix(name, "minecraft:infested_") {
 			// Si no tiene Silk Touch (Toque de Seda), spawneamos el Silverfish.

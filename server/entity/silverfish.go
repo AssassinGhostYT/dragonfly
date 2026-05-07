@@ -19,7 +19,7 @@ type Silverfish struct {
 	mc        *MovementComputer
 	self      *Ent
 
-	health float64
+	health   float64
 	alerted *behavior.CallForHelpBehavior
 }
 
