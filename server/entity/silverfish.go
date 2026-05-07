@@ -38,6 +38,10 @@ func (s Silverfish) Apply(data *world.EntityData) {
 // Tick ...
 func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 	s.self = e
+	if s.Dead() {
+		return nil
+	}
+
 	if s.brain == nil {
 		s.brain = mobsx.NewBrain()
 		wBridge := worldBridge{E: e}
@@ -66,7 +70,6 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 	pos := cube.PosFromVec3(e.Position())
 	b := tx.Block(pos)
 	
-	// Lava check
 	if n, ok := b.(interface{ EncodeBlock() (string, map[string]any) }); ok {
 		name, _ := n.EncodeBlock()
 		if name == "minecraft:lava" || name == "minecraft:flowing_lava" {
@@ -74,10 +77,21 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		}
 	}
 	
-	// Suffocation check: if the block at the entity's head/body is solid.
-	// We use the block's model to see if it has any bounding boxes (meaning it's not air/liquid).
 	if len(b.Model().BBox(pos, tx)) > 0 {
 		s.Hurt(1.0, SuffocationDamageSource{})
+	}
+
+	// Auto-jump logic for StepHeight 1.0
+	if s.mc.OnGround() {
+		// If we are moving and there's a block in front, jump.
+		if e.Velocity().LenSqr() > 0.001 {
+			// Check block at feet level in movement direction
+			vel := e.Velocity().Normalize()
+			frontPos := pos.Add(cube.Pos{int(vel.X() * 1.2), 0, int(vel.Z() * 1.2)})
+			if tx.Block(frontPos).Model().FaceSolid(frontPos, cube.FaceDown, tx) {
+				e.data.Vel = mgl64.Vec3{e.data.Vel.X(), 0.35, e.data.Vel.Z()}
+			}
+		}
 	}
 
 	// Attack logic
@@ -89,7 +103,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		}); ok {
 			if p.GameMode().AllowsTakingDamage() {
 				dist := p.Position().Sub(e.Position()).Len()
-				if dist < 0.9 {
+				if dist < 1.0 {
 					dmg := 1.0
 					if tx.World().Difficulty() == world.DifficultyHard {
 						dmg = 1.5
@@ -121,8 +135,10 @@ func (t silverfishType) Open(tx *world.Tx, handle *world.EntityHandle, data *wor
 	return &Ent{tx: tx, handle: handle, data: data}
 }
 func (silverfishType) EncodeEntity() string { return "minecraft:silverfish" }
+
+// BBox: Slightly larger to facilitate hitting (Width 0.6, Height 0.4)
 func (silverfishType) BBox(world.Entity) cube.BBox {
-	return cube.Box(-0.2, 0, -0.25, 0.2, 0.3, 0.25)
+	return cube.Box(-0.3, 0, -0.3, 0.3, 0.4, 0.3)
 }
 func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
 	Silverfish{health: 8}.Apply(data)
@@ -135,6 +151,9 @@ func (s *Silverfish) MaxHealth() float64 { return 8 }
 func (s *Silverfish) SetMaxHealth(v float64) { s.health = v }
 func (s *Silverfish) Dead() bool { return s.health <= 0 }
 func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v bool) {
+	if s.Dead() {
+		return 0, false
+	}
 	s.health -= damage
 	if s.health > 0 && damage > 0 {
 		if s.alerted != nil {
@@ -142,10 +161,11 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 		}
 	}
 	if s.health <= 0 && s.self != nil {
-		s.self.tx.AddParticle(s.self.Position(), particle.Death{})
+		s.self.tx.AddParticle(s.self.Position(), particle.Cloud{})
 		for _, handle := range NewExperienceOrbs(s.self.Position(), 5) {
 			s.self.tx.AddEntity(handle)
 		}
+		_ = s.self.Close()
 	}
 	return damage, true
 }

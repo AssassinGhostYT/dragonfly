@@ -70,7 +70,6 @@ func (e EntityBridge) SetPosition(pos [3]float64) {
 
 		dist := mgl64.Vec3{dx, dy, dz}.Len()
 		if dist > 0 {
-			// Mojang Spec: Speed 0.25. Normalizamos la dirección y aplicamos la velocidad.
 			f := 0.25
 			ent.data.Vel = mgl64.Vec3{(dx / dist) * f, ent.data.Vel.Y(), (dz / dist) * f}
 		}
@@ -89,7 +88,6 @@ func (e EntityBridge) SetRotation(yaw, pitch float32) {
 }
 
 func (e EntityBridge) ID() int64 {
-	// Usamos un identificador único basado en el handle de la entidad.
 	return int64(uintptr(unsafe.Pointer(e.E.H())))
 }
 
@@ -126,7 +124,7 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 
 		if infested != nil {
 			e.tx.SetBlock(cube.Pos{pos.X(), pos.Y(), pos.Z()}, infested, nil)
-			e.tx.AddParticle(cube.Pos{pos.X(), pos.Y(), pos.Z()}.Vec3Centre(), particle.SnowballPoof{})
+			e.tx.AddParticle(cube.Pos{pos.X(), pos.Y(), pos.Z()}.Vec3Centre(), particle.Cloud{})
 			ent.Close()
 		}
 	}
@@ -166,7 +164,7 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 
 				if normal != nil {
 					e.tx.SetBlock(checkPos, normal, nil)
-					e.tx.AddParticle(checkPos.Vec3Centre(), particle.SnowballPoof{})
+					e.tx.AddParticle(checkPos.Vec3Centre(), particle.Cloud{})
 					opts := world.EntitySpawnOpts{Position: checkPos.Vec3Centre()}
 					e.tx.AddEntity(NewSilverfish(opts))
 
