@@ -124,7 +124,7 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 
 		if infested != nil {
 			e.tx.SetBlock(cube.Pos{pos.X(), pos.Y(), pos.Z()}, infested, nil)
-			e.tx.AddParticle(cube.Pos{pos.X(), pos.Y(), pos.Z()}.Vec3Centre(), particle.Cloud{})
+			e.tx.AddParticle(cube.Pos{pos.X(), pos.Y(), pos.Z()}.Vec3Centre(), particle.SnowballPoof{})
 			ent.Close()
 		}
 	}
@@ -164,7 +164,7 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 
 				if normal != nil {
 					e.tx.SetBlock(checkPos, normal, nil)
-					e.tx.AddParticle(checkPos.Vec3Centre(), particle.Cloud{})
+					e.tx.AddParticle(checkPos.Vec3Centre(), particle.SnowballPoof{})
 					opts := world.EntitySpawnOpts{Position: checkPos.Vec3Centre()}
 					e.tx.AddEntity(NewSilverfish(opts))
 

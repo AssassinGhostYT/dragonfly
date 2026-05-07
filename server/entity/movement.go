@@ -99,7 +99,7 @@ func (c *MovementComputer) applyHorizontalForces(tx *world.Tx, pos, vel mgl64.Ve
 
 func (c *MovementComputer) checkCollision(tx *world.Tx, e world.Entity, pos, vel mgl64.Vec3) (mgl64.Vec3, mgl64.Vec3) {
 	deltaX, deltaY, deltaZ := vel[0], vel[1], vel[2]
-	origX, origY, origZ := deltaX, deltaY, deltaZ
+	origX, _, origZ := deltaX, deltaY, deltaZ
 
 	entityBBox := e.H().Type().BBox(e).Translate(pos)
 	blocks := blockBBoxsAround(tx, entityBBox.Extend(vel))

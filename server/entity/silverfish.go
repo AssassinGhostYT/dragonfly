@@ -140,7 +140,7 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 		}
 	}
 	if s.health <= 0 && s.self != nil {
-		s.self.tx.AddParticle(s.self.Position(), particle.Death{})
+		s.self.tx.AddParticle(s.self.Position(), particle.SnowballPoof{})
 		for _, handle := range NewExperienceOrbs(s.self.Position(), 5) {
 			s.self.tx.AddEntity(handle)
 		}
