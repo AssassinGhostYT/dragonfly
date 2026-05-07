@@ -9,6 +9,7 @@ import (
 )
 
 func init() {
+	item.NewSilverfish = NewSilverfish
 	silverfishEgg := item.SpawnEgg{Entity: SilverfishType}
 	world.RegisterItem(silverfishEgg)
 	creative.RegisterItem(creative.Item{

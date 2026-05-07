@@ -12,6 +12,9 @@ type SpawnEgg struct {
 	Entity world.EntityType
 }
 
+// NewSilverfish is a function that can be used to create a new silverfish entity. It is set by the entity package.
+var NewSilverfish func(opts world.EntitySpawnOpts) *world.EntityHandle
+
 // UseOnBlock spawns the entity at the position of the block clicked.
 func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, tx *world.Tx, user User, ctx *UseContext) bool {
 	if s.Entity == nil {
@@ -19,11 +22,9 @@ func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, 
 	}
 	opts := world.EntitySpawnOpts{Position: pos.Side(face).Vec3Middle()}
 	
-	// Check if there is a specific spawner for this entity in the registry config.
-	// For now, we only support Silverfish as a proof of concept.
 	name := s.Entity.EncodeEntity()
-	if name == "minecraft:silverfish" {
-		tx.AddEntity(tx.World().EntityRegistry().Config().Silverfish(opts))
+	if name == "minecraft:silverfish" && NewSilverfish != nil {
+		tx.AddEntity(NewSilverfish(opts))
 		ctx.SubtractFromCount(1)
 		return true
 	}
