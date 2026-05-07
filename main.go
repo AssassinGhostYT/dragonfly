@@ -106,7 +106,7 @@ func (h *GlobalHandler) HandleBlockBreak(ctx *player.Context, pos cube.Pos, drop
 				opts := world.EntitySpawnOpts{Position: pos.Vec3Centre()}
 				p.Tx().AddEntity(entity.NewSilverfish(opts))
 				for i := 0; i < 8; i++ {
-					p.Tx().AddParticle(pos.Vec3Centre(), particle.LargeSmoke{})
+					p.Tx().AddParticle(pos.Vec3Centre(), particle.Evaporate{})
 				}
 			}
 		}
