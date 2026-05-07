@@ -352,6 +352,11 @@ func (s *Session) ViewSleepingPlayers(sleeping, max int) {
 // ViewParticle ...
 func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 	switch pa := p.(type) {
+	case particle.Cloud, particle.Death:
+		s.writePacket(&packet.LevelEvent{
+			EventType: packet.LevelEventParticleCloud,
+			Position:  vec64To32(pos),
+		})
 	case particle.DragonEggTeleport:
 		xSign, ySign, zSign := 0, 0, 0
 		if pa.Diff.X() < 0 {
