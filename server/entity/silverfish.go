@@ -148,7 +148,7 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 		}
 		if s.self != nil {
 			for i := 0; i < 5; i++ {
-				s.self.tx.AddParticle(s.self.Position(), particle.LargeSmoke{})
+				s.self.tx.AddParticle(s.self.Position(), particle.Evaporate{})
 			}
 			for _, v := range s.self.tx.Viewers(s.self.Position()) {
 				v.ViewEntityAction(s.self, HurtAction{})
@@ -156,7 +156,7 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 		}
 	}
 	if s.health <= 0 && s.self != nil {
-		s.self.tx.AddParticle(s.self.Position(), particle.LargeSmoke{})
+		s.self.tx.AddParticle(s.self.Position(), particle.Evaporate{})
 		for _, v := range s.self.tx.Viewers(s.self.Position()) {
 			v.ViewEntityAction(s.self, DeathAction{})
 		}
