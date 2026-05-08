@@ -135,13 +135,21 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 	speed := 0.23
 	wanderSpeed := 0.12
 	if z.baby {
-		speed = 0.32
-		wanderSpeed = 0.18
+		speed = 0.45 // Even faster
+		wanderSpeed = 0.22
 	}
 	if len(z.scanner.Detected) > 0 {
 		z.navigator.Speed = speed
 	} else {
 		z.navigator.Speed = wanderSpeed
+	}
+
+	// Adult height check (prevent adult from pathing through small gaps)
+	if !z.baby {
+		headPos := cube.PosFromVec3(e.Position().Add(mgl64.Vec3{0, 1.8, 0}))
+		if tx.Block(headPos).Model().FaceSolid(headPos, cube.FaceDown, tx) {
+			z.navigator.Speed = 0 // Stuck/Can't fit
+		}
 	}
 
 	wBridge := WorldBridge{E: e}
@@ -300,11 +308,13 @@ func (z *Zombie) Hurt(damage float64, src world.DamageSource) (n float64, v bool
 		for _, v := range z.self.tx.Viewers(z.self.Position()) {
 			v.ViewEntityAction(z.self, DeathAction{})
 		}
-		for _, handle := range NewExperienceOrbs(z.self.Position(), z.Experience()) {
+		// Added a small offset to prevent visual overlapping/shadows
+		spawnPos := z.self.Position().Add(mgl64.Vec3{0, 0.1, 0})
+		for _, handle := range NewExperienceOrbs(spawnPos, z.Experience()) {
 			z.self.tx.AddEntity(handle)
 		}
 		for _, it := range z.Drops() {
-			z.self.tx.AddEntity(NewItem(world.EntitySpawnOpts{Position: z.self.Position()}, it))
+			z.self.tx.AddEntity(NewItem(world.EntitySpawnOpts{Position: spawnPos}, it))
 		}
 	}
 	return damage, true
