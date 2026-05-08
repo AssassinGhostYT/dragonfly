@@ -56,7 +56,7 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 
 		z.brain.AddSensor(playerScanner)
 		z.brain.AddBehavior(z.attack)
-		z.brain.AddBehavior(behavior.NewWander(z.navigator, 40)) // Slower wander
+		z.brain.AddBehavior(behavior.NewWander(z.navigator, 80)) // Even slower wander
 	}
 
 	// Update damage based on difficulty
@@ -83,6 +83,21 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 	wBridge := WorldBridge{E: e}
 	z.navigator.Sync(wBridge)
 	z.brain.Tick(EntityBridge{E: e, tx: tx}, wBridge)
+
+	// If not moving and no target, look around randomly
+	if z.navigator.Path.AtEnd() && len(z.brain.Sensors()[0].(*sensor.PlayerSensor).Detected) == 0 {
+		if rand.Intn(20) == 0 {
+			curYaw, curPitch := e.Rotation().Yaw(), e.Rotation().Pitch()
+			newYaw := curYaw + (rand.Float64()*60 - 30)
+			newPitch := curPitch + (rand.Float64()*20 - 10)
+			if newPitch > 20 {
+				newPitch = 20
+			} else if newPitch < -20 {
+				newPitch = -20
+			}
+			e.data.Rot = cube.Rotation{newYaw, newPitch}
+		}
+	}
 
 	// Zombie burning in sun logic
 	pos := cube.PosFromVec3(e.Position())
