@@ -9,6 +9,7 @@ import (
 	"github.com/df-mc/dragonfly/server/entity/effect"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
+	"github.com/df-mc/dragonfly/server/world/particle"
 	"github.com/df-mc/dragonfly/server/world/sound"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/google/uuid"
@@ -165,7 +166,7 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		rot := e.Rotation()
 		pos := cube.PosFromVec3(e.Position().Add(cube.Rotation{rot.Yaw(), 0}.Vec3().Mul(0.8)))
 		if b := tx.Block(pos); b != nil {
-			if _, ok := b.(interface{ WoodDoor() bool }); ok {
+			if _, ok := b.(block.WoodDoor); ok {
 				// Try to break the door (5% chance per second approx)
 				if rand.Intn(400) == 0 {
 					tx.SetBlock(pos, block.Air{}, nil)
@@ -224,7 +225,7 @@ func (z *Zombie) MaxHealth() float64     { return 20 }
 func (z *Zombie) SetMaxHealth(v float64) { z.health = v }
 func (z *Zombie) Dead() bool             { return z.health <= 0 }
 func (z *Zombie) Baby() bool             { return z.baby }
-func (z *Zombie) InteractiveTag() string { return "Generar Zombie Bebé" }
+func (z *Zombie) InteractText() string   { return "Generar Zombie Bebé" }
 func (z *Zombie) Hurt(damage float64, src world.DamageSource) (n float64, v bool) {
 	if z.Dead() {
 		return 0, false

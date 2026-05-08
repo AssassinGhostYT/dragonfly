@@ -26,7 +26,7 @@ type Silverfish struct {
 }
 
 func NewSilverfish(opts world.EntitySpawnOpts) *world.EntityHandle {
-	s := &Silverfish{health: 10}
+	s := &Silverfish{health: 12}
 	return opts.New(SilverfishType, s)
 }
 
@@ -128,13 +128,13 @@ func (silverfishType) BBox(world.Entity) cube.BBox {
 	return cube.Box(-0.23, 0, -0.23, 0.23, 0.32, 0.23)
 }
 func (silverfishType) DecodeNBT(_ map[string]any, data *world.EntityData) {
-	s := &Silverfish{health: 10}
+	s := &Silverfish{health: 12}
 	s.Apply(data)
 }
 func (silverfishType) EncodeNBT(*world.EntityData) map[string]any { return nil }
 
 func (s *Silverfish) Health() float64        { return s.health }
-func (s *Silverfish) MaxHealth() float64     { return 10 }
+func (s *Silverfish) MaxHealth() float64     { return 12 }
 func (s *Silverfish) SetMaxHealth(v float64) { s.health = v }
 func (s *Silverfish) Dead() bool             { return s.health <= 0 }
 func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v bool) {
