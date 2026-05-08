@@ -26,7 +26,8 @@ type Zombie struct {
 	attack    *behavior.AttackBehavior
 	scanner   *sensor.PlayerSensor
 
-	health float64
+	health    float64
+	deadTicks int
 }
 
 // NewZombie creates a new Zombie entity.
@@ -43,6 +44,10 @@ func (z *Zombie) Apply(data *world.EntityData) {
 func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 	z.self = e
 	if z.Dead() {
+		z.deadTicks++
+		if z.deadTicks >= 20 {
+			_ = e.Close()
+		}
 		return nil
 	}
 
@@ -161,7 +166,6 @@ func (z *Zombie) Hurt(damage float64, src world.DamageSource) (n float64, v bool
 	}
 	if z.health <= 0 && z.self != nil {
 		z.self.tx.PlaySound(z.self.Position(), sound.ZombieDeath{})
-		z.self.tx.AddParticle(z.self.Position(), particle.Evaporate{})
 		for _, v := range z.self.tx.Viewers(z.self.Position()) {
 			v.ViewEntityAction(z.self, DeathAction{})
 		}
@@ -169,7 +173,10 @@ func (z *Zombie) Hurt(damage float64, src world.DamageSource) (n float64, v bool
 		for _, handle := range NewExperienceOrbs(z.self.Position(), 5) {
 			z.self.tx.AddEntity(handle)
 		}
-		_ = z.self.Close()
+		// Item drops
+		for _, it := range z.Drops() {
+			z.self.tx.AddEntity(NewItem(it, z.self.Position()))
+		}
 	}
 	return damage, true
 }
