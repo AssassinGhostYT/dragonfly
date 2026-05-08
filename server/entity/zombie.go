@@ -159,6 +159,22 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		tx.PlaySound(e.Position(), sound.ZombieAmbient{})
 	}
 
+	// Door breaking logic
+	if !z.baby {
+		// Use a simple forward position based on rotation
+		rot := e.Rotation()
+		pos := cube.PosFromVec3(e.Position().Add(cube.Rotation{rot.Yaw(), 0}.Vec3().Mul(0.8)))
+		if b := tx.Block(pos); b != nil {
+			if _, ok := b.(interface{ WoodDoor() bool }); ok {
+				// Try to break the door (5% chance per second approx)
+				if rand.Intn(400) == 0 {
+					tx.SetBlock(pos, block.Air{}, nil)
+					tx.PlaySound(pos.Vec3(), sound.DoorCrash{})
+				}
+			}
+		}
+	}
+
 	m := z.mc.TickMovement(e, e.data.Pos, e.data.Vel, e.data.Rot, tx)
 	e.data.Pos, e.data.Vel = m.pos, m.vel
 	return m
@@ -207,6 +223,8 @@ func (z *Zombie) Health() float64        { return z.health }
 func (z *Zombie) MaxHealth() float64     { return 20 }
 func (z *Zombie) SetMaxHealth(v float64) { z.health = v }
 func (z *Zombie) Dead() bool             { return z.health <= 0 }
+func (z *Zombie) Baby() bool             { return z.baby }
+func (z *Zombie) InteractiveTag() string { return "Generar Zombie Bebé" }
 func (z *Zombie) Hurt(damage float64, src world.DamageSource) (n float64, v bool) {
 	if z.Dead() {
 		return 0, false
@@ -222,6 +240,7 @@ func (z *Zombie) Hurt(damage float64, src world.DamageSource) (n float64, v bool
 		}
 	}
 	if z.health <= 0 && z.self != nil {
+		z.self.tx.AddParticle(z.self.Position(), particle.Evaporate{})
 		z.self.tx.PlaySound(z.self.Position(), sound.ZombieDeath{})
 		for _, v := range z.self.tx.Viewers(z.self.Position()) {
 			v.ViewEntityAction(z.self, DeathAction{})

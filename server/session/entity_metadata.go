@@ -62,6 +62,9 @@ func (s *Session) addSpecificMetadata(e any, m protocol.EntityMetadata) {
 	if bb, ok := e.(baby); ok && bb.Baby() {
 		m.SetFlag(protocol.EntityDataKeyFlags, protocol.EntityDataFlagBaby)
 	}
+	if i, ok := e.(interactable); ok {
+		m[protocol.EntityDataKeyInteractiveTag] = i.InteractiveTag()
+	}
 	if b, ok := e.(breather); ok {
 		m[protocol.EntityDataKeyAirSupply] = int16(b.AirSupply().Milliseconds() / 50)
 		m[protocol.EntityDataKeyAirSupplyMax] = int16(b.MaxAirSupply().Milliseconds() / 50)
@@ -296,4 +299,8 @@ type variable interface {
 
 type markVariable interface {
 	MarkVariant() int32
+}
+
+type interactable interface {
+	InteractiveTag() string
 }
