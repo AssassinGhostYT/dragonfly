@@ -2,9 +2,9 @@ name: Compile Dragonfly
 
 on:
   push:
-    branches: [ "infested-blocks-test" ]
+    branches: [ "infested-blocks-test", "Mobs" ]
   pull_request:
-    branches: [ "infested-blocks-test" ]
+    branches: [ "infested-blocks-test", "Mobs" ]
   workflow_dispatch:
 
 jobs:

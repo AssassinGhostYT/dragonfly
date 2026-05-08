@@ -1,52 +1,47 @@
 package entity
 
 import (
-	"github.com/df-mc/dragonfly/server/entity/mobs"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/item/creative"
 	"github.com/df-mc/dragonfly/server/item/enchantment"
-	"github.com/df-mc/dragonfly/server/item/potion"
-	"github.com/df-mc/dragonfly/server/world"
-)
+	func init() {
+		item.NewSilverfish = NewSilverfish
+		silverfishEgg := item.SpawnEgg{Entity: SilverfishType}
+		world.RegisterItem(silverfishEgg)
+		creative.RegisterItem(creative.Item{
+			Stack: item.NewStack(silverfishEgg, 1),
+			Group: "itemGroup.name.spawnEgg",
+		})
 
-func init() {
-	item.NewSilverfish = NewSilverfish
-	silverfishEgg := item.SpawnEgg{Entity: SilverfishType}
-	world.RegisterItem(silverfishEgg)
-	creative.RegisterItem(creative.Item{
-		Stack: item.NewStack(silverfishEgg, 1),
-		Group: "itemGroup.name.spawnEgg",
+		zombieEgg := item.SpawnEgg{Entity: ZombieType}
+		world.RegisterItem(zombieEgg)
+		creative.RegisterItem(creative.Item{
+			Stack: item.NewStack(zombieEgg, 1),
+			Group: "itemGroup.name.spawnEgg",
+		})
+	}
+
+	// DefaultRegistry is a world.EntityRegistry that registers all default entities
+	// implemented by Dragonfly.
+	var DefaultRegistry = conf.New([]world.EntityType{
+		AreaEffectCloudType,
+		ArrowType,
+		BottleOfEnchantingType,
+		EggType,
+		EnderPearlType,
+		ExperienceOrbType,
+		FallingBlockType,
+		FireworkType,
+		ItemType,
+		LightningType,
+		LingeringPotionType,
+		SnowballType,
+		SplashPotionType,
+		TNTType,
+		TextType,
+		SilverfishType,
+		ZombieType,
 	})
-
-	zombieEgg := item.SpawnEgg{Entity: mobs.ZombieType}
-	world.RegisterItem(zombieEgg)
-	creative.RegisterItem(creative.Item{
-		Stack: item.NewStack(zombieEgg, 1),
-		Group: "itemGroup.name.spawnEgg",
-	})
-}
-
-// DefaultRegistry is a world.EntityRegistry that registers all default entities
-// implemented by Dragonfly.
-var DefaultRegistry = conf.New([]world.EntityType{
-	AreaEffectCloudType,
-	ArrowType,
-	BottleOfEnchantingType,
-	EggType,
-	EnderPearlType,
-	ExperienceOrbType,
-	FallingBlockType,
-	FireworkType,
-	ItemType,
-	LightningType,
-	LingeringPotionType,
-	SnowballType,
-	SplashPotionType,
-	TNTType,
-	TextType,
-	SilverfishType,
-	mobs.ZombieType,
-})
 
 var conf = world.EntityRegistryConfig{
 	TNT:                NewTNT,
