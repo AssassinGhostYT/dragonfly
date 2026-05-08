@@ -9,7 +9,6 @@ import (
 	"github.com/df-mc/dragonfly/server/entity/effect"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
-	"github.com/df-mc/dragonfly/server/world/particle"
 	"github.com/df-mc/dragonfly/server/world/sound"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/google/uuid"
@@ -175,7 +174,7 @@ func (z *Zombie) Hurt(damage float64, src world.DamageSource) (n float64, v bool
 		}
 		// Item drops
 		for _, it := range z.Drops() {
-			z.self.tx.AddEntity(NewItem(it, z.self.Position()))
+			z.self.tx.AddEntity(NewItem(world.EntitySpawnOpts{Position: z.self.Position()}, it))
 		}
 	}
 	return damage, true
