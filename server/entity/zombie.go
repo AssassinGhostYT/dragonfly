@@ -131,22 +131,21 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		} else if diff == world.DifficultyHard {
 			totalDmg = 1.5 * totalDmg
 		}
-	z.navigator.Speed = 0.23
-	if z.baby {
-		z.navigator.Speed = 0.45 // 100% faster base
 	}
-	...
+	z.attack.Damage = totalDmg
+	z.attack.Cooldown = time.Second * 2
+
 	// Speed Adjustment
 	speed := 0.23
 	wanderSpeed := 0.12
 	if z.baby {
-	speed = 0.45
-	wanderSpeed = 0.22
+		speed = 0.45
+		wanderSpeed = 0.22
 	}
 	if len(z.scanner.Detected) > 0 {
-	z.navigator.Speed = speed
+		z.navigator.Speed = speed
 	} else {
-	z.navigator.Speed = wanderSpeed
+		z.navigator.Speed = wanderSpeed
 	}
 
 	// Adult pathfinding is now handled by Finder.Height = 2
