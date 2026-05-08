@@ -47,7 +47,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		s.navigator = mobsx.NewNavigator(EntityBridge{E: e, tx: tx}, wBridge)
 		s.navigator.Speed = 0.25
 
-		playerScanner := &sensor.PlayerSensor{Range: 16}
+		playerScanner := &sensor.PlayerSensor{Range: 32}
 		s.alerted = &behavior.CallForHelpBehavior{RangeX: 21, RangeY: 11, RangeZ: 21}
 
 		attack := behavior.NewAttack(playerScanner, s.navigator)
