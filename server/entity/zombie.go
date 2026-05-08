@@ -95,7 +95,7 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		}
 		z.navigator.Speed = 0.23
 		if z.baby {
-			z.navigator.Speed = 0.32 // 30% faster
+			z.navigator.Speed = 0.45 
 		}
 
 		z.scanner = &sensor.PlayerSensor{Range: 35}
@@ -148,21 +148,22 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		z.navigator.Speed = wanderSpeed
 	}
 
-	// Adult pathfinding is now handled by Finder.Height = 2
-	// But we keep this as backup for immediate reaction
+	// Adult height backup
 	if !z.baby {
-	headPos := cube.PosFromVec3(e.Position().Add(mgl64.Vec3{0, 1.8, 0}))
-	if tx.Block(headPos).Model().FaceSolid(headPos, cube.FaceDown, tx) {
-		z.navigator.Speed = 0
+		headPos := cube.PosFromVec3(e.Position().Add(mgl64.Vec3{0, 1.8, 0}))
+		if tx.Block(headPos).Model().FaceSolid(headPos, cube.FaceDown, tx) {
+			z.navigator.Speed = 0
+		}
 	}
-	}
+
 	wBridge := WorldBridge{E: e}
 	z.navigator.Sync(wBridge)
 	z.brain.Tick(EntityBridge{E: e, tx: tx}, wBridge)
 
+	m := z.mc.TickMovement(e, e.data.Pos, e.data.Vel, e.data.Rot, tx)
+
 	// Door breaking logic (Wiki: ~10 seconds = 200 ticks)
 	if !z.baby && diff == world.DifficultyHard {
-		// Priority: Check for door in front
 		var doorPos cube.Pos
 		rot := e.Rotation()
 		lookingAt := cube.PosFromVec3(e.Position().Add(cube.Rotation{rot.Yaw(), 0}.Vec3().Mul(0.7)))
@@ -192,6 +193,7 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 				z.doorBreakingTicks = 0
 				z.currentDoorPos = cube.Pos{}
 			}
+			e.data.Pos, e.data.Vel = m.pos, e.data.Vel
 			return m
 		} else if z.currentDoorPos != (cube.Pos{}) {
 			z.stopCracking(tx, z.currentDoorPos)
@@ -232,9 +234,26 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		tx.PlaySound(e.Position(), sound.ZombieAmbient{})
 	}
 
-	m := z.mc.TickMovement(e, e.data.Pos, e.data.Vel, e.data.Rot, tx)
 	e.data.Pos, e.data.Vel = m.pos, m.vel
 	return m
+}
+
+func (z *Zombie) startCracking(tx *world.Tx, pos cube.Pos) {
+	for _, v := range tx.Viewers(pos.Vec3()) {
+		v.ViewBlockAction(pos, block.StartCrackAction{BreakTime: time.Second * 10})
+	}
+}
+
+func (z *Zombie) stopCracking(tx *world.Tx, pos cube.Pos) {
+	for _, v := range tx.Viewers(pos.Vec3()) {
+		v.ViewBlockAction(pos, block.StopCrackAction{})
+	}
+}
+
+func (z *Zombie) updateCracking(tx *world.Tx, pos cube.Pos, ticks int) {
+	for _, v := range tx.Viewers(pos.Vec3()) {
+		v.ViewBlockAction(pos, block.ContinueCrackAction{BreakTime: time.Second * 10})
+	}
 }
 
 var ZombieType zombieType
