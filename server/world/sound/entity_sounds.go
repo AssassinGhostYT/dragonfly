@@ -1,15 +1,4 @@
-package mobsound
-
-import (
-	"github.com/df-mc/dragonfly/server/world"
-	"github.com/go-gl/mathgl/mgl64"
-)
-
-// sound implements the world.Sound interface.
-type sound struct{}
-
-// Play ...
-func (sound) Play(*world.World, mgl64.Vec3) {}
+package sound
 
 // --- SILVERFISH ---
 
