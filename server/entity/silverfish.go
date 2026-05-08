@@ -1,7 +1,7 @@
 package entity
 
 import (
-	"github.com/AssassinGhostYT/MobsX-MC"
+	mobsx "github.com/AssassinGhostYT/MobsX-MC"
 	"github.com/AssassinGhostYT/MobsX-MC/behavior"
 	"github.com/AssassinGhostYT/MobsX-MC/sensor"
 	"github.com/df-mc/dragonfly/server/block"
