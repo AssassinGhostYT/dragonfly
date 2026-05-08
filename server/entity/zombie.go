@@ -24,6 +24,7 @@ type Zombie struct {
 	mc        *MovementComputer
 	self      *Ent
 	attack    *behavior.AttackBehavior
+	scanner   *sensor.PlayerSensor
 
 	health float64
 }
@@ -51,10 +52,10 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		z.navigator = mobsx.NewNavigator(EntityBridge{E: e, tx: tx}, wBridge)
 		z.navigator.Speed = 0.23
 
-		playerScanner := &sensor.PlayerSensor{Range: 35} // Follow range 35
-		z.attack = behavior.NewAttack(playerScanner, z.navigator)
+		z.scanner = &sensor.PlayerSensor{Range: 35} // Follow range 35
+		z.attack = behavior.NewAttack(z.scanner, z.navigator)
 
-		z.brain.AddSensor(playerScanner)
+		z.brain.AddSensor(z.scanner)
 		z.brain.AddBehavior(z.attack)
 		z.brain.AddBehavior(behavior.NewWander(z.navigator, 80)) // Even slower wander
 	}
@@ -74,7 +75,7 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 	z.attack.Cooldown = time.Second * 2
 
 	// Adjust speed based on whether it has a target
-	if len(z.brain.Sensors()[0].(*sensor.PlayerSensor).Detected) > 0 {
+	if len(z.scanner.Detected) > 0 {
 		z.navigator.Speed = 0.23 // Standard chase speed
 	} else {
 		z.navigator.Speed = 0.12 // Slower wander speed
@@ -85,7 +86,7 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 	z.brain.Tick(EntityBridge{E: e, tx: tx}, wBridge)
 
 	// If not moving and no target, look around randomly
-	if z.navigator.Path.AtEnd() && len(z.brain.Sensors()[0].(*sensor.PlayerSensor).Detected) == 0 {
+	if z.navigator.Path.AtEnd() && len(z.scanner.Detected) == 0 {
 		if rand.Intn(20) == 0 {
 			curYaw, curPitch := e.Rotation().Yaw(), e.Rotation().Pitch()
 			newYaw := curYaw + (rand.Float64()*60 - 30)
