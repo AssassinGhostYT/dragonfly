@@ -11,19 +11,24 @@ import (
 func init() {
 	item.NewSilverfish = NewSilverfish
 	item.NewZombie = NewZombie
-	silverfishEgg := item.SpawnEgg{Entity: SilverfishType}
-	world.RegisterItem(silverfishEgg)
-	creative.RegisterItem(creative.Item{
-		Stack: item.NewStack(silverfishEgg, 1),
-		Group: "itemGroup.name.spawnEgg",
-	})
 
-	zombieEgg := item.SpawnEgg{Entity: ZombieType}
-	world.RegisterItem(zombieEgg)
-	creative.RegisterItem(creative.Item{
-		Stack: item.NewStack(zombieEgg, 1),
-		Group: "itemGroup.name.spawnEgg",
-	})
+	// Grouped Spawn Eggs
+	eggs := []struct {
+		t    world.EntityType
+		meta int16
+	}{
+		{SilverfishType, 60},
+		{ZombieType, 32},
+	}
+
+	for _, eggData := range eggs {
+		egg := item.SpawnEgg{Entity: eggData.t, Meta: eggData.meta}
+		world.RegisterItem(egg)
+		creative.RegisterItem(creative.Item{
+			Stack: item.NewStack(egg, 1),
+			Group: "itemGroup.name.spawnEgg",
+		})
+	}
 }
 
 // DefaultRegistry is a world.EntityRegistry that registers all default entities

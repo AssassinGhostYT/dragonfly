@@ -10,6 +10,8 @@ import (
 type SpawnEgg struct {
 	// Entity is the type of entity to spawn.
 	Entity world.EntityType
+	// Meta is the metadata value used for the egg.
+	Meta int16
 }
 
 // NewSilverfish is a function that can be used to create a new silverfish entity. It is set by the entity package.
@@ -25,31 +27,33 @@ func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, 
 	}
 	opts := world.EntitySpawnOpts{Position: pos.Side(face).Vec3Middle()}
 
+	// Use the entity's spawn function if available, otherwise generic spawn (if we had one)
+	// For now, we still use the hardcoded ones as we don't have a generic world.NewEntity in this version
 	name := s.Entity.EncodeEntity()
 	switch name {
 	case "minecraft:silverfish":
 		if NewSilverfish != nil {
 			tx.AddEntity(NewSilverfish(opts))
-			ctx.SubtractFromCount(1)
-			return true
+		} else {
+			return false
 		}
 	case "minecraft:zombie":
 		if NewZombie != nil {
 			tx.AddEntity(NewZombie(opts))
-			ctx.SubtractFromCount(1)
-			return true
+		} else {
+			return false
 		}
+	default:
+		return false
 	}
 
-	return false
+	ctx.SubtractFromCount(1)
+	return true
 }
 
 // EncodeItem ...
 func (s SpawnEgg) EncodeItem() (name string, meta int16) {
-	if s.Entity != nil {
-		return s.Entity.EncodeEntity() + "_spawn_egg", 0
-	}
-	return "minecraft:spawn_egg", 0
+	return "minecraft:spawn_egg", s.Meta
 }
 
 // MaxCount ...
