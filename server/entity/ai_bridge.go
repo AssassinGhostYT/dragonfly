@@ -133,6 +133,7 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 		}
 	}
 }
+
 func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 	pos := e.E.Position()
 	center := cube.Pos{int(pos.X()), int(pos.Y()), int(pos.Z())}
@@ -152,7 +153,6 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 	}
 
 	for x := -rangeX / 2; x <= rangeX/2; x++ {
-...
 		for y := -rangeY / 2; y <= rangeY/2; y++ {
 			for z := -rangeZ / 2; z <= rangeZ/2; z++ {
 				checkPos := center.Add(cube.Pos{x, y, z})
