@@ -15,6 +15,9 @@ type SpawnEgg struct {
 // NewSilverfish is a function that can be used to create a new silverfish entity. It is set by the entity package.
 var NewSilverfish func(opts world.EntitySpawnOpts) *world.EntityHandle
 
+// NewZombie is a function that can be used to create a new zombie entity. It is set by the entity package.
+var NewZombie func(opts world.EntitySpawnOpts) *world.EntityHandle
+
 // UseOnBlock spawns the entity at the position of the block clicked.
 func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, tx *world.Tx, user User, ctx *UseContext) bool {
 	if s.Entity == nil {
@@ -23,10 +26,19 @@ func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, 
 	opts := world.EntitySpawnOpts{Position: pos.Side(face).Vec3Middle()}
 
 	name := s.Entity.EncodeEntity()
-	if name == "minecraft:silverfish" && NewSilverfish != nil {
-		tx.AddEntity(NewSilverfish(opts))
-		ctx.SubtractFromCount(1)
-		return true
+	switch name {
+	case "minecraft:silverfish":
+		if NewSilverfish != nil {
+			tx.AddEntity(NewSilverfish(opts))
+			ctx.SubtractFromCount(1)
+			return true
+		}
+	case "minecraft:zombie":
+		if NewZombie != nil {
+			tx.AddEntity(NewZombie(opts))
+			ctx.SubtractFromCount(1)
+			return true
+		}
 	}
 
 	return false
@@ -34,9 +46,10 @@ func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, 
 
 // EncodeItem ...
 func (s SpawnEgg) EncodeItem() (name string, meta int16) {
-	// This is a bit tricky as different eggs have different names in Bedrock.
-	// For now we only implement silverfish.
-	return "minecraft:silverfish_spawn_egg", 0
+	if s.Entity != nil {
+		return s.Entity.EncodeEntity() + "_spawn_egg", 0
+	}
+	return "minecraft:spawn_egg", 0
 }
 
 // MaxCount ...
