@@ -18,8 +18,8 @@ func init() {
 		t    world.EntityType
 		meta int16
 	}{
-		{SilverfishType, 60},
-		{ZombieType, 32},
+		{SilverfishType, 39}, // Silverfish meta is 39
+		{ZombieType, 32},     // Zombie meta is 32
 	}
 
 	for _, eggData := range eggs {
@@ -27,7 +27,7 @@ func init() {
 		world.RegisterItem(egg)
 		creative.RegisterItem(creative.Item{
 			Stack: item.NewStack(egg, 1),
-			Group: "itemGroup.name.spawnEgg",
+			Group: "itemGroup.name.mobEgg",
 		})
 	}
 }

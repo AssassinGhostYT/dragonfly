@@ -64,7 +64,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 	s.navigator.Sync(wBridge)
 	s.brain.Tick(EntityBridge{E: e, tx: tx}, wBridge)
 
-	pos := cube.PosFromVec3(e.Position().Add(mgl64.Vec3{0, 0.1, 0}))
+	pos := cube.PosFromVec3(e.Position().Add(mgl64.Vec3{0, 0.2, 0}))
 	b := tx.Block(pos)
 
 	if n, ok := b.(interface {

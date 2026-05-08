@@ -72,10 +72,7 @@ func (s SpawnEgg) UseOnEntity(e world.Entity, tx *world.Tx, user User, ctx *UseC
 
 // EncodeItem ...
 func (s SpawnEgg) EncodeItem() (name string, meta int16) {
-	if s.Entity != nil {
-		return s.Entity.EncodeEntity() + "_spawn_egg", 0
-	}
-	return "minecraft:spawn_egg", 0
+	return "minecraft:spawn_egg", s.Meta
 }
 
 // MaxCount ...
