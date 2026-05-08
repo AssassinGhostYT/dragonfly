@@ -27,17 +27,47 @@ type Zombie struct {
 
 	health    float64
 	deadTicks int
+
+	baby      bool
+	equipment []item.Stack
 }
 
 // NewZombie creates a new Zombie entity.
 func NewZombie(opts world.EntitySpawnOpts) *world.EntityHandle {
 	z := &Zombie{health: 20}
+	if rand.Intn(20) == 0 { // 5% chance of being a baby
+		z.baby = true
+	}
+	return opts.New(ZombieType, z)
+}
+
+// NewZombieBaby creates a new Baby Zombie entity.
+func NewZombieBaby(opts world.EntitySpawnOpts) *world.EntityHandle {
+	z := &Zombie{health: 20, baby: true}
 	return opts.New(ZombieType, z)
 }
 
 func (z *Zombie) Apply(data *world.EntityData) {
 	z.mc = &MovementComputer{Gravity: 0.08, Drag: 0.02, StepHeight: 1.0}
 	data.Data = z
+
+	// Natural equipment
+	if !z.baby {
+		if rand.Intn(100) < 5 { // 5% chance of equipment
+			r := rand.Intn(3)
+			switch r {
+			case 0:
+				z.equipment = append(z.equipment, item.NewStack(item.IronShovel{}, 1))
+			case 1:
+				z.equipment = append(z.equipment, item.NewStack(item.IronSword{}, 1))
+			case 2:
+				// 1% chance for diamond sword
+				if rand.Intn(100) < 1 {
+					z.equipment = append(z.equipment, item.NewStack(item.DiamondSword{}, 1))
+				}
+			}
+		}
+	}
 }
 
 func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
@@ -55,6 +85,9 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		wBridge := WorldBridge{E: e}
 		z.navigator = mobsx.NewNavigator(EntityBridge{E: e, tx: tx}, wBridge)
 		z.navigator.Speed = 0.23
+		if z.baby {
+			z.navigator.Speed = 0.32 // Baby zombies are faster
+		}
 
 		z.scanner = &sensor.PlayerSensor{Range: 35} // Follow range 35
 		z.attack = behavior.NewAttack(z.scanner, z.navigator)
@@ -79,10 +112,17 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 	z.attack.Cooldown = time.Second * 2
 
 	// Adjust speed based on whether it has a target
+	speed := 0.23
+	wanderSpeed := 0.12
+	if z.baby {
+		speed = 0.32
+		wanderSpeed = 0.18
+	}
+
 	if len(z.scanner.Detected) > 0 {
-		z.navigator.Speed = 0.23 // Standard chase speed
+		z.navigator.Speed = speed
 	} else {
-		z.navigator.Speed = 0.12 // Slower wander speed
+		z.navigator.Speed = wanderSpeed
 	}
 
 	wBridge := WorldBridge{E: e}
@@ -136,14 +176,31 @@ func (t zombieType) Open(tx *world.Tx, handle *world.EntityHandle, data *world.E
 }
 func (zombieType) EncodeEntity() string { return "minecraft:zombie" }
 
-func (zombieType) BBox(world.Entity) cube.BBox {
+func (zombieType) BBox(e world.Entity) cube.BBox {
+	if ent, ok := e.(*Ent); ok {
+		if z, ok := ent.data.Data.(*Zombie); ok && z.baby {
+			return cube.Box(-0.245, 0, -0.245, 0.245, 0.98, 0.245)
+		}
+	}
 	return cube.Box(-0.3, 0, -0.3, 0.3, 1.9, 0.3)
 }
-func (zombieType) DecodeNBT(_ map[string]any, data *world.EntityData) {
+func (zombieType) DecodeNBT(m map[string]any, data *world.EntityData) {
 	z := &Zombie{health: 20}
+	if baby, ok := m["IsBaby"].(byte); ok && baby == 1 {
+		z.baby = true
+	}
 	z.Apply(data)
 }
-func (zombieType) EncodeNBT(*world.EntityData) map[string]any { return nil }
+func (zombieType) EncodeNBT(data *world.EntityData) map[string]any {
+	if z, ok := data.Data.(*Zombie); ok {
+		baby := byte(0)
+		if z.baby {
+			baby = 1
+		}
+		return map[string]any{"IsBaby": baby}
+	}
+	return nil
+}
 
 func (z *Zombie) Health() float64        { return z.health }
 func (z *Zombie) MaxHealth() float64     { return 20 }
@@ -201,7 +258,14 @@ func (z *Zombie) PistonBreakable() bool      { return false }
 
 // Drops returns the drops of the zombie.
 func (z *Zombie) Drops() []item.Stack {
-	return []item.Stack{item.NewStack(item.RottenFlesh{}, rand.Intn(3))}
+	drops := []item.Stack{item.NewStack(item.RottenFlesh{}, rand.Intn(3))}
+	// Add equipment to drops with a small chance
+	for _, it := range z.equipment {
+		if rand.Intn(100) < 15 { // 15% chance to drop equipment
+			drops = append(drops, it)
+		}
+	}
+	return drops
 }
 
 func (z *Zombie) UUID() uuid.UUID {
@@ -217,3 +281,4 @@ func (z *Zombie) DeathPosition() (mgl64.Vec3, world.Dimension, bool) {
 	}
 	return z.self.Position(), z.self.tx.World().Dimension(), z.Dead()
 }
+
