@@ -89,6 +89,10 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		z.brain = mobsx.NewBrain()
 		wBridge := WorldBridge{E: e}
 		z.navigator = mobsx.NewNavigator(EntityBridge{E: e, tx: tx}, wBridge)
+		z.navigator.Finder.Height = 2
+		if z.baby {
+			z.navigator.Finder.Height = 1
+		}
 		z.navigator.Speed = 0.23
 		if z.baby {
 			z.navigator.Speed = 0.32 // 30% faster
@@ -127,70 +131,71 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		} else if diff == world.DifficultyHard {
 			totalDmg = 1.5 * totalDmg
 		}
+	z.navigator.Speed = 0.23
+	if z.baby {
+		z.navigator.Speed = 0.45 // 100% faster base
 	}
-	z.attack.Damage = totalDmg
-	z.attack.Cooldown = time.Second * 2
-
+	...
 	// Speed Adjustment
 	speed := 0.23
 	wanderSpeed := 0.12
 	if z.baby {
-		speed = 0.45 // Even faster
-		wanderSpeed = 0.22
+	speed = 0.45
+	wanderSpeed = 0.22
 	}
 	if len(z.scanner.Detected) > 0 {
-		z.navigator.Speed = speed
+	z.navigator.Speed = speed
 	} else {
-		z.navigator.Speed = wanderSpeed
+	z.navigator.Speed = wanderSpeed
 	}
 
-	// Adult height check (prevent adult from pathing through small gaps)
+	// Adult pathfinding is now handled by Finder.Height = 2
+	// But we keep this as backup for immediate reaction
 	if !z.baby {
-		headPos := cube.PosFromVec3(e.Position().Add(mgl64.Vec3{0, 1.8, 0}))
-		if tx.Block(headPos).Model().FaceSolid(headPos, cube.FaceDown, tx) {
-			z.navigator.Speed = 0 // Stuck/Can't fit
-		}
+	headPos := cube.PosFromVec3(e.Position().Add(mgl64.Vec3{0, 1.8, 0}))
+	if tx.Block(headPos).Model().FaceSolid(headPos, cube.FaceDown, tx) {
+		z.navigator.Speed = 0
 	}
-
+	}
 	wBridge := WorldBridge{E: e}
 	z.navigator.Sync(wBridge)
 	z.brain.Tick(EntityBridge{E: e, tx: tx}, wBridge)
 
 	// Door breaking logic (Wiki: ~10 seconds = 200 ticks)
 	if !z.baby && diff == world.DifficultyHard {
+		// Priority: Check for door in front
+		var doorPos cube.Pos
 		rot := e.Rotation()
-		targetPos := cube.PosFromVec3(e.Position().Add(cube.Rotation{rot.Yaw(), 0}.Vec3().Mul(0.8)))
-		b := tx.Block(targetPos)
-		if door, ok := b.(block.WoodDoor); ok && !door.Open {
-			if targetPos != z.currentDoorPos {
+		lookingAt := cube.PosFromVec3(e.Position().Add(cube.Rotation{rot.Yaw(), 0}.Vec3().Mul(0.7)))
+		
+		if door, ok := tx.Block(lookingAt).(block.WoodDoor); ok && !door.Open {
+			doorPos = lookingAt
+		}
+
+		if doorPos != (cube.Pos{}) {
+			if doorPos != z.currentDoorPos {
 				if z.currentDoorPos != (cube.Pos{}) {
-					for _, v := range tx.Viewers(z.currentDoorPos.Vec3()) {
-						v.ViewBlockAction(z.currentDoorPos, block.StopCrackAction{})
-					}
+					z.stopCracking(tx, z.currentDoorPos)
 				}
-				z.currentDoorPos = targetPos
+				z.currentDoorPos = doorPos
 				z.doorBreakingTicks = 0
-				for _, v := range tx.Viewers(targetPos.Vec3()) {
-					v.ViewBlockAction(targetPos, block.StartCrackAction{BreakTime: time.Second * 10})
-				}
+				z.startCracking(tx, doorPos)
 			}
 			z.doorBreakingTicks++
+			e.data.Vel = mgl64.Vec3{} // Stop moving while breaking
 			if z.doorBreakingTicks%20 == 0 {
-				tx.PlaySound(targetPos.Vec3(), sound.ZombieAmbient{}) // Generic banging sound placeholder
-				for _, v := range tx.Viewers(targetPos.Vec3()) {
-					v.ViewBlockAction(targetPos, block.ContinueCrackAction{BreakTime: time.Second * 10})
-				}
+				tx.PlaySound(doorPos.Vec3(), sound.ZombieAmbient{})
+				z.updateCracking(tx, doorPos, z.doorBreakingTicks)
 			}
 			if z.doorBreakingTicks >= 200 {
-				tx.SetBlock(targetPos, block.Air{}, nil)
-				tx.PlaySound(targetPos.Vec3(), sound.DoorCrash{})
+				tx.SetBlock(doorPos, block.Air{}, nil)
+				tx.PlaySound(doorPos.Vec3(), sound.DoorCrash{})
 				z.doorBreakingTicks = 0
 				z.currentDoorPos = cube.Pos{}
 			}
+			return m
 		} else if z.currentDoorPos != (cube.Pos{}) {
-			for _, v := range tx.Viewers(z.currentDoorPos.Vec3()) {
-				v.ViewBlockAction(z.currentDoorPos, block.StopCrackAction{})
-			}
+			z.stopCracking(tx, z.currentDoorPos)
 			z.currentDoorPos = cube.Pos{}
 			z.doorBreakingTicks = 0
 		}
@@ -308,13 +313,20 @@ func (z *Zombie) Hurt(damage float64, src world.DamageSource) (n float64, v bool
 		for _, v := range z.self.tx.Viewers(z.self.Position()) {
 			v.ViewEntityAction(z.self, DeathAction{})
 		}
-		// Added a small offset to prevent visual overlapping/shadows
-		spawnPos := z.self.Position().Add(mgl64.Vec3{0, 0.1, 0})
+		
+		// Spread drops to avoid shadows and ensure they can be picked up
+		spawnPos := z.self.Position().Add(mgl64.Vec3{0, 0.5, 0})
 		for _, handle := range NewExperienceOrbs(spawnPos, z.Experience()) {
 			z.self.tx.AddEntity(handle)
 		}
 		for _, it := range z.Drops() {
-			z.self.tx.AddEntity(NewItem(world.EntitySpawnOpts{Position: spawnPos}, it))
+			if it.Count() > 0 {
+				opts := world.EntitySpawnOpts{
+					Position: spawnPos,
+					Velocity: mgl64.Vec3{rand.Float64()*0.1 - 0.05, 0.2, rand.Float64()*0.1 - 0.05},
+				}
+				z.self.tx.AddEntity(NewItem(opts, it))
+			}
 		}
 	}
 	return damage, true
