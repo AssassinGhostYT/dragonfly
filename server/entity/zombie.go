@@ -64,8 +64,8 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 
 	// Zombie burning in sun logic
 	pos := cube.PosFromVec3(e.Position())
-	if tx.World().Time()%24000 < 12000 && tx.World().SkyLight(pos) > 10 && tx.HighestBlock(pos.X(), pos.Z()) <= pos.Y() {
-		e.OnFire()
+	if tx.World().Time()%24000 < 12000 && tx.SkyLight(pos) > 10 && tx.HighestBlock(pos.X(), pos.Z()) <= pos.Y() {
+		e.SetOnFire(time.Second * 8)
 	}
 
 	if rand.Intn(100) == 0 {
