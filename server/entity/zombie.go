@@ -57,13 +57,13 @@ func (z *Zombie) Apply(data *world.EntityData) {
 			r := rand.Intn(3)
 			switch r {
 			case 0:
-				z.equipment = append(z.equipment, item.NewStack(item.IronShovel{}, 1))
+				z.equipment = append(z.equipment, item.NewStack(item.Shovel{Tier: item.ToolTierIron}, 1))
 			case 1:
-				z.equipment = append(z.equipment, item.NewStack(item.IronSword{}, 1))
+				z.equipment = append(z.equipment, item.NewStack(item.Sword{Tier: item.ToolTierIron}, 1))
 			case 2:
 				// 1% chance for diamond sword
 				if rand.Intn(100) < 1 {
-					z.equipment = append(z.equipment, item.NewStack(item.DiamondSword{}, 1))
+					z.equipment = append(z.equipment, item.NewStack(item.Sword{Tier: item.ToolTierDiamond}, 1))
 				}
 			}
 		}
