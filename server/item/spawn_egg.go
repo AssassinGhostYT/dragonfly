@@ -53,7 +53,10 @@ func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, 
 
 // EncodeItem ...
 func (s SpawnEgg) EncodeItem() (name string, meta int16) {
-	return "minecraft:spawn_egg", s.Meta
+	if s.Entity != nil {
+		return s.Entity.EncodeEntity() + "_spawn_egg", 0
+	}
+	return "minecraft:spawn_egg", 0
 }
 
 // MaxCount ...

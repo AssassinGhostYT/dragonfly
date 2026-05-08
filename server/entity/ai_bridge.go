@@ -65,17 +65,10 @@ func (e EntityBridge) Position() [3]float64 {
 
 func (e EntityBridge) SetPosition(pos [3]float64) {
 	if ent, ok := e.E.(*Ent); ok {
-		current := ent.data.Pos
-		target := mgl64.Vec3{pos[0], pos[1], pos[2]}
-		diff := target.Sub(current)
-
-		if diff.Len() < 1.0 {
-			ent.data.Vel = mgl64.Vec3{diff.X() * 0.8, ent.data.Vel.Y(), diff.Z() * 0.8}
-			if diff.Y() > 0.1 {
-				ent.data.Vel = mgl64.Vec3{ent.data.Vel.X(), 0.42, ent.data.Vel.Z()}
-			}
-		} else {
-			ent.data.Pos = target
+		dy := pos[1] - ent.data.Pos.Y()
+		ent.data.Pos = mgl64.Vec3{pos[0], pos[1], pos[2]}
+		if dy > 0.1 {
+			ent.data.Vel = mgl64.Vec3{ent.data.Vel.X(), 0.42, ent.data.Vel.Z()}
 		}
 	}
 }
