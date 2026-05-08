@@ -23,6 +23,7 @@ type Zombie struct {
 	navigator *mobsx.Navigator
 	mc        *MovementComputer
 	self      *Ent
+	attack    *behavior.AttackBehavior
 
 	health float64
 }
@@ -50,19 +51,31 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		z.navigator = mobsx.NewNavigator(EntityBridge{E: e, tx: tx}, wBridge)
 		z.navigator.Speed = 0.23
 
-		playerScanner := &sensor.PlayerSensor{Range: 32}
-		attack := behavior.NewAttack(playerScanner, z.navigator)
-		attack.Damage = 3.0
-		attack.Cooldown = time.Second * 2
+		playerScanner := &sensor.PlayerSensor{Range: 35} // Follow range 35
+		z.attack = behavior.NewAttack(playerScanner, z.navigator)
 
 		z.brain.AddSensor(playerScanner)
-		z.brain.AddBehavior(attack)
+		z.brain.AddBehavior(z.attack)
 		z.brain.AddBehavior(behavior.NewWander(z.navigator, 40)) // Slower wander
 	}
 
+	// Update damage based on difficulty
+	diff := tx.World().Difficulty()
+	switch diff {
+	case world.DifficultyEasy:
+		z.attack.Damage = 2.5
+	case world.DifficultyNormal:
+		z.attack.Damage = 3.0
+	case world.DifficultyHard:
+		z.attack.Damage = 4.5
+	default:
+		z.attack.Damage = 3.0
+	}
+	z.attack.Cooldown = time.Second * 2
+
 	// Adjust speed based on whether it has a target
 	if len(z.brain.Sensors()[0].(*sensor.PlayerSensor).Detected) > 0 {
-		z.navigator.Speed = 0.23 // Normal chase speed
+		z.navigator.Speed = 0.23 // Standard chase speed
 	} else {
 		z.navigator.Speed = 0.12 // Slower wander speed
 	}
@@ -120,6 +133,9 @@ func (z *Zombie) Hurt(damage float64, src world.DamageSource) (n float64, v bool
 	if z.Dead() {
 		return 0, false
 	}
+	// 2 armor points (8% reduction)
+	damage *= 0.92
+
 	z.health -= damage
 	if z.health > 0 && damage > 0 {
 		z.self.tx.PlaySound(z.self.Position(), sound.ZombieHurt{})
@@ -146,6 +162,9 @@ func (z *Zombie) KnockBack(src mgl64.Vec3, f, h float64) {
 	if z.self == nil {
 		return
 	}
+	// 5% Knockback resistance
+	f *= 0.95
+	h *= 0.95
 	z.self.data.Vel = z.mc.KnockBack(src, f, h, z.self.data.Pos)
 }
 func (z *Zombie) Velocity() mgl64.Vec3       { return z.self.data.Vel }

@@ -68,7 +68,7 @@ func (e EntityBridge) SetPosition(pos [3]float64) {
 		dy := pos[1] - ent.data.Pos.Y()
 		ent.data.Pos = mgl64.Vec3{pos[0], pos[1], pos[2]}
 		if dy > 0.1 {
-			ent.data.Vel = mgl64.Vec3{ent.data.Vel.X(), 0.3, ent.data.Vel.Z()}
+			ent.data.Vel = mgl64.Vec3{ent.data.Vel.X(), 0.42, ent.data.Vel.Z()}
 		}
 	}
 }
