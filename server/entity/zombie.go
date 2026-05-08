@@ -206,7 +206,7 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 	// Burning logic
 	pos := cube.PosFromVec3(e.Position())
 	if tx.World().Time()%24000 > 23460 || tx.World().Time()%24000 < 12000 { // 27s before day
-		if tx.SkyLight(pos) > 14 && tx.HighestBlock(pos.X(), pos.Z()) <= pos.Y() && !e.H().Type().BBox(e).Empty() {
+		if tx.SkyLight(pos) > 14 && tx.HighestBlock(pos.X(), pos.Z()) <= pos.Y() {
 			// Wiki: check water/helmet etc (simplified for now)
 			e.SetOnFire(time.Second * 8)
 		}
@@ -343,7 +343,7 @@ func (z *Zombie) UUID() uuid.UUID {
 	if z.self == nil {
 		return uuid.UUID{}
 	}
-	return z.handle.UUID()
+	return z.self.H().UUID()
 }
 
 func (z *Zombie) DeathPosition() (mgl64.Vec3, world.Dimension, bool) {
