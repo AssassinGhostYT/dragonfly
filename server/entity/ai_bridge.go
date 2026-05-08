@@ -133,18 +133,16 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 		}
 	}
 }
-
 func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 	pos := e.E.Position()
 	center := cube.Pos{int(pos.X()), int(pos.Y()), int(pos.Z())}
 	spawned := 0
 
-	// Alert nearby already spawned silverfish using a bounding box instead of iterating all entities.
-	nearbyBox := cube.Box(-16, -16, -16, 16, 16, 16).Translate(pos)
-	for ent := range e.tx.EntitiesWithin(nearbyBox) {
+	// Alert nearby already spawned silverfish
+	for ent := range e.tx.Entities() {
 		if s, ok := ent.(*Ent); ok {
 			if silver, ok := s.data.Data.(*Silverfish); ok {
-				if silver.self != nil && silver.self != e.E {
+				if silver.self != nil && silver.self != e.E && silver.self.Position().Sub(pos).Len() < 16 {
 					if silver.alerted != nil {
 						silver.alerted.Alerted = true
 					}
@@ -154,6 +152,7 @@ func (e EntityBridge) AlertOthers(rangeX, rangeY, rangeZ int) {
 	}
 
 	for x := -rangeX / 2; x <= rangeX/2; x++ {
+...
 		for y := -rangeY / 2; y <= rangeY/2; y++ {
 			for z := -rangeZ / 2; z <= rangeZ/2; z++ {
 				checkPos := center.Add(cube.Pos{x, y, z})
