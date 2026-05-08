@@ -65,14 +65,7 @@ func (e EntityBridge) Position() [3]float64 {
 
 func (e EntityBridge) SetPosition(pos [3]float64) {
 	if ent, ok := e.E.(*Ent); ok {
-		current := ent.data.Pos
-		dx, dz := pos[0]-current.X(), pos[2]-current.Z()
-
-		dist := mgl64.Vec2{dx, dz}.Len()
-		if dist > 0 {
-			f := 0.25
-			ent.data.Vel = mgl64.Vec3{(dx / dist) * f, ent.data.Vel.Y(), (dz / dist) * f}
-		}
+		ent.data.Pos = mgl64.Vec3{pos[0], pos[1], pos[2]}
 	}
 }
 
@@ -140,6 +133,9 @@ func (e EntityBridge) Attack(target api.Entity, damage float64) {
 			Hurt(damage float64, src world.DamageSource) (n float64, v bool)
 		}); ok {
 			p.Hurt(damage, AttackDamageSource{Attacker: e.E})
+			for _, v := range e.tx.Viewers(e.E.Position()) {
+				v.ViewEntityAction(e.E, SwingArmAction{})
+			}
 		}
 	}
 }

@@ -4,8 +4,10 @@ import (
 	mobsx "github.com/AssassinGhostYT/MobsX-MC"
 	"github.com/AssassinGhostYT/MobsX-MC/behavior"
 	"github.com/AssassinGhostYT/MobsX-MC/sensor"
+	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/entity/effect"
+	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/df-mc/dragonfly/server/world/particle"
 	"github.com/df-mc/dragonfly/server/world/sound"
@@ -32,7 +34,7 @@ func NewZombie(opts world.EntitySpawnOpts) *world.EntityHandle {
 }
 
 func (z *Zombie) Apply(data *world.EntityData) {
-	z.mc = &MovementComputer{Gravity: 0.08, Drag: 0.02, StepHeight: 0.6}
+	z.mc = &MovementComputer{Gravity: 0.08, Drag: 0.02, StepHeight: 1.0}
 	data.Data = z
 }
 
@@ -48,14 +50,21 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		z.navigator = mobsx.NewNavigator(EntityBridge{E: e, tx: tx}, wBridge)
 		z.navigator.Speed = 0.23
 
-		playerScanner := &sensor.PlayerSensor{Range: 16}
+		playerScanner := &sensor.PlayerSensor{Range: 32}
 		attack := behavior.NewAttack(playerScanner, z.navigator)
 		attack.Damage = 3.0
 		attack.Cooldown = time.Second * 2
 
 		z.brain.AddSensor(playerScanner)
 		z.brain.AddBehavior(attack)
-		z.brain.AddBehavior(behavior.NewWander(z.navigator, 10))
+		z.brain.AddBehavior(behavior.NewWander(z.navigator, 40)) // Slower wander
+	}
+
+	// Adjust speed based on whether it has a target
+	if len(z.brain.Sensors()[0].(*sensor.PlayerSensor).Detected) > 0 {
+		z.navigator.Speed = 0.23 // Normal chase speed
+	} else {
+		z.navigator.Speed = 0.12 // Slower wander speed
 	}
 
 	wBridge := WorldBridge{E: e}
@@ -66,6 +75,10 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 	pos := cube.PosFromVec3(e.Position())
 	if tx.World().Time()%24000 < 12000 && tx.SkyLight(pos) > 10 && tx.HighestBlock(pos.X(), pos.Z()) <= pos.Y() {
 		e.SetOnFire(time.Second * 8)
+	}
+
+	if e.OnFireDuration() > 0 && tx.World().Time()%20 == 0 {
+		z.Hurt(1.0, block.FireDamageSource{})
 	}
 
 	if rand.Intn(100) == 0 {
@@ -144,6 +157,11 @@ func (z *Zombie) RemoveEffect(e effect.Type) {}
 func (z *Zombie) Effects() []effect.Effect   { return nil }
 func (z *Zombie) PistonImmovable() bool      { return false }
 func (z *Zombie) PistonBreakable() bool      { return false }
+
+// Drops returns the drops of the zombie.
+func (z *Zombie) Drops() []item.Stack {
+	return []item.Stack{item.NewStack(item.RottenFlesh{}, rand.Intn(3))}
+}
 
 func (z *Zombie) UUID() uuid.UUID {
 	if z.self == nil {
