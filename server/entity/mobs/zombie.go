@@ -110,13 +110,13 @@ func (z *Zombie) Hurt(damage float64, src world.DamageSource) (n float64, v bool
 	}
 	z.health -= damage
 	if z.health > 0 && damage > 0 {
-		z.self.tx.PlaySound(z.self.Position(), sound.ZombieHurt{})
+		z.self.tx.PlaySound(z.self.Position(), mobsound.ZombieHurt{})
 		for _, v := range z.self.tx.Viewers(z.self.Position()) {
 			v.ViewEntityAction(z.self, entity.HurtAction{})
 		}
 	}
 	if z.health <= 0 && z.self != nil {
-		z.self.tx.PlaySound(z.self.Position(), sound.ZombieDeath{})
+		z.self.tx.PlaySound(z.self.Position(), mobsound.ZombieDeath{})
 		z.self.tx.AddParticle(z.self.Position(), particle.Evaporate{})
 		for _, v := range z.self.tx.Viewers(z.self.Position()) {
 			v.ViewEntityAction(z.self, entity.DeathAction{})

@@ -1,13 +1,15 @@
-package sound
+package mobsound
 
 import (
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/go-gl/mathgl/mgl64"
 )
 
-// sound implements the world.Sound interface for this package.
-// We use the one already defined in block.go if available, or redefine it here.
-// Since it's the same package, we just need the structures.
+// sound implements the world.Sound interface.
+type sound struct{}
+
+// Play ...
+func (sound) Play(*world.World, mgl64.Vec3) {}
 
 // --- SILVERFISH ---
 
@@ -36,5 +38,3 @@ type ZombieDeath struct{ sound }
 
 // ZombieStep is a sound played when a zombie steps on a block.
 type ZombieStep struct{ sound }
-
-// --- FUTURE MOBS (Cow, Pig, etc.) will be added here ---
