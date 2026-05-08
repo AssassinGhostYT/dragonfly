@@ -60,7 +60,7 @@ func (s SpawnEgg) UseOnEntity(e world.Entity, tx *world.Tx, user User, ctx *UseC
 		return false
 	}
 
-	if e.EncodeEntity() == s.Entity.EncodeEntity() && s.Entity.EncodeEntity() == "minecraft:zombie" {
+	if e.H().Type().EncodeEntity() == s.Entity.EncodeEntity() && s.Entity.EncodeEntity() == "minecraft:zombie" {
 		if NewZombieBaby != nil {
 			tx.AddEntity(NewZombieBaby(world.EntitySpawnOpts{Position: e.Position()}))
 			ctx.SubtractFromCount(1)
