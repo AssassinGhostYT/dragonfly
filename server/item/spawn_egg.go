@@ -20,6 +20,9 @@ var NewSilverfish func(opts world.EntitySpawnOpts) *world.EntityHandle
 // NewZombie is a function that can be used to create a new zombie entity. It is set by the entity package.
 var NewZombie func(opts world.EntitySpawnOpts) *world.EntityHandle
 
+// NewZombieBaby is a function that can be used to create a new baby zombie entity. It is set by the entity package.
+var NewZombieBaby func(opts world.EntitySpawnOpts) *world.EntityHandle
+
 // UseOnBlock spawns the entity at the position of the block clicked.
 func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, tx *world.Tx, user User, ctx *UseContext) bool {
 	if s.Entity == nil {
@@ -49,6 +52,22 @@ func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, 
 
 	ctx.SubtractFromCount(1)
 	return true
+}
+
+// UseOnEntity spawns a baby entity if used on an adult of the same type.
+func (s SpawnEgg) UseOnEntity(e world.Entity, tx *world.Tx, user User, ctx *UseContext) bool {
+	if s.Entity == nil {
+		return false
+	}
+
+	if e.EncodeEntity() == s.Entity.EncodeEntity() && s.Entity.EncodeEntity() == "minecraft:zombie" {
+		if NewZombieBaby != nil {
+			tx.AddEntity(NewZombieBaby(world.EntitySpawnOpts{Position: e.Position()}))
+			ctx.SubtractFromCount(1)
+			return true
+		}
+	}
+	return false
 }
 
 // EncodeItem ...

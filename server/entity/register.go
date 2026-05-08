@@ -11,6 +11,7 @@ import (
 func init() {
 	item.NewSilverfish = NewSilverfish
 	item.NewZombie = NewZombie
+	item.NewZombieBaby = NewZombieBaby
 
 	// Grouped Spawn Eggs
 	eggs := []struct {

@@ -91,6 +91,7 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 
 		z.scanner = &sensor.PlayerSensor{Range: 35} // Follow range 35
 		z.attack = behavior.NewAttack(z.scanner, z.navigator)
+		z.attack.AttackRange = 1.3 // Tighter attack range for perfection
 
 		z.brain.AddSensor(z.scanner)
 		z.brain.AddBehavior(z.attack)

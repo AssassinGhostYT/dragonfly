@@ -65,9 +65,20 @@ func (e EntityBridge) Position() [3]float64 {
 
 func (e EntityBridge) SetPosition(pos [3]float64) {
 	if ent, ok := e.E.(*Ent); ok {
-		dy := pos[1] - ent.data.Pos.Y()
-		ent.data.Pos = mgl64.Vec3{pos[0], pos[1], pos[2]}
-		if dy > 0.1 {
+		current := ent.data.Pos
+		target := mgl64.Vec3{pos[0], pos[1], pos[2]}
+		diff := target.Sub(current)
+
+		// For small movements, use velocity to make it smooth.
+		if diff.Len() < 1.0 {
+			ent.data.Vel = mgl64.Vec3{diff.X() * 0.8, ent.data.Vel.Y(), diff.Z() * 0.8}
+		} else {
+			// For large movements, teleport.
+			ent.data.Pos = target
+		}
+
+		// Vertical boost for jumping.
+		if target.Y()-current.Y() > 0.1 {
 			ent.data.Vel = mgl64.Vec3{ent.data.Vel.X(), 0.42, ent.data.Vel.Z()}
 		}
 	}
