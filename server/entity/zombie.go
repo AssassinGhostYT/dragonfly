@@ -194,7 +194,11 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 			curYaw, curPitch := e.Rotation().Yaw(), e.Rotation().Pitch()
 			newYaw := curYaw + (rand.Float64()*60 - 30)
 			newPitch := curPitch + (rand.Float64()*20 - 10)
-			if newPitch > 20 { newPitch = 20 } else if newPitch < -20 { newPitch = -20 }
+			if newPitch > 20 {
+				newPitch = 20
+			} else if newPitch < -20 {
+				newPitch = -20
+			}
 			e.data.Rot = cube.Rotation{newYaw, newPitch}
 		}
 	}
@@ -252,7 +256,9 @@ func (zombieType) DecodeNBT(m map[string]any, data *world.EntityData) {
 func (zombieType) EncodeNBT(data *world.EntityData) map[string]any {
 	if z, ok := data.Data.(*Zombie); ok {
 		baby := byte(0)
-		if z.baby { baby = 1 }
+		if z.baby {
+			baby = 1
+		}
 		return map[string]any{"IsBaby": baby}
 	}
 	return nil
@@ -264,12 +270,16 @@ func (z *Zombie) SetMaxHealth(v float64) { z.health = v }
 func (z *Zombie) Dead() bool             { return z.health <= 0 }
 func (z *Zombie) Baby() bool             { return z.baby }
 func (z *Zombie) Scale() float64 {
-	if z.baby { return 0.5 }
+	if z.baby {
+		return 0.5
+	}
 	return 1.0
 }
 func (z *Zombie) InteractText() string { return "Generar Zombie Bebé" }
 func (z *Zombie) Experience() int {
-	if z.baby { return 12 }
+	if z.baby {
+		return 12
+	}
 	return 5
 }
 func (z *Zombie) Hurt(damage float64, src world.DamageSource) (n float64, v bool) {
@@ -301,46 +311,9 @@ func (z *Zombie) Hurt(damage float64, src world.DamageSource) (n float64, v bool
 }
 func (z *Zombie) Heal(health float64, src world.HealingSource) { z.health += health }
 func (z *Zombie) KnockBack(src mgl64.Vec3, f, h float64) {
-	if z.self == nil { return }
-	f *= 0.95
-	h *= 0.95
-	z.self.data.Vel = z.mc.KnockBack(src, f, h, z.self.data.Pos)
-}
-func (z *Zombie) Velocity() mgl64.Vec3       { return z.self.data.Vel }
-func (z *Zombie) SetVelocity(v mgl64.Vec3)   { z.self.data.Vel = v }
-func (z *Zombie) Speed() float64             { return 0.23 }
-func (z *Zombie) SetSpeed(v float64)         {}
-func (z *Zombie) AddEffect(e effect.Effect)  {}
-func (z *Zombie) RemoveEffect(e effect.Type) {}
-func (z *Zombie) Effects() []effect.Effect   { return nil }
-func (z *Zombie) PistonImmovable() bool      { return false }
-func (z *Zombie) PistonBreakable() bool      { return false }
-
-// Drops returns the drops of the zombie.
-func (z *Zombie) Drops() []item.Stack {
-	drops := []item.Stack{item.NewStack(item.RottenFlesh{}, rand.Intn(3))}
-	for _, it := range z.equipment {
-		if rand.Intn(100) < 15 { drops = append(drops, it) }
-	}
-	return drops
-}
-
-func (z *Zombie) UUID() uuid.UUID {
-	if z.self == nil { return uuid.UUID{} }
-	return z.self.H().UUID()
-}
-
-func (z *Zombie) DeathPosition() (mgl64.Vec3, world.Dimension, bool) {
-	if z.self == nil { return mgl64.Vec3{}, nil, z.Dead() }
-	return z.self.Position(), z.self.tx.World().Dimension(), z.Dead()
-}
-
-func (z *Zombie) Heal(health float64, src world.HealingSource) { z.health += health }
-func (z *Zombie) KnockBack(src mgl64.Vec3, f, h float64) {
 	if z.self == nil {
 		return
 	}
-	// 5% Knockback resistance
 	f *= 0.95
 	h *= 0.95
 	z.self.data.Vel = z.mc.KnockBack(src, f, h, z.self.data.Pos)
@@ -358,9 +331,8 @@ func (z *Zombie) PistonBreakable() bool      { return false }
 // Drops returns the drops of the zombie.
 func (z *Zombie) Drops() []item.Stack {
 	drops := []item.Stack{item.NewStack(item.RottenFlesh{}, rand.Intn(3))}
-	// Add equipment to drops with a small chance
 	for _, it := range z.equipment {
-		if rand.Intn(100) < 15 { // 15% chance to drop equipment
+		if rand.Intn(100) < 15 {
 			drops = append(drops, it)
 		}
 	}
@@ -371,7 +343,7 @@ func (z *Zombie) UUID() uuid.UUID {
 	if z.self == nil {
 		return uuid.UUID{}
 	}
-	return z.self.H().UUID()
+	return z.handle.UUID()
 }
 
 func (z *Zombie) DeathPosition() (mgl64.Vec3, world.Dimension, bool) {
@@ -380,4 +352,3 @@ func (z *Zombie) DeathPosition() (mgl64.Vec3, world.Dimension, bool) {
 	}
 	return z.self.Position(), z.self.tx.World().Dimension(), z.Dead()
 }
-
