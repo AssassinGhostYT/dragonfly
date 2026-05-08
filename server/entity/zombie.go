@@ -135,15 +135,15 @@ func (z *Zombie) KnockBack(src mgl64.Vec3, f, h float64) {
 	}
 	z.self.data.Vel = z.mc.KnockBack(src, f, h, z.self.data.Pos)
 }
-func (z *Zombie) Velocity() mgl64.Vec3     { return z.self.data.Vel }
-func (z *Zombie) SetVelocity(v mgl64.Vec3) { z.self.data.Vel = v }
-func (z *Zombie) Speed() float64           { return 0.23 }
-func (z *Zombie) SetSpeed(v float64)       {}
-func (z *Zombie) AddEffect(e effect.Effect) {}
+func (z *Zombie) Velocity() mgl64.Vec3       { return z.self.data.Vel }
+func (z *Zombie) SetVelocity(v mgl64.Vec3)   { z.self.data.Vel = v }
+func (z *Zombie) Speed() float64             { return 0.23 }
+func (z *Zombie) SetSpeed(v float64)         {}
+func (z *Zombie) AddEffect(e effect.Effect)  {}
 func (z *Zombie) RemoveEffect(e effect.Type) {}
-func (z *Zombie) Effects() []effect.Effect { return nil }
-func (z *Zombie) PistonImmovable() bool    { return false }
-func (z *Zombie) PistonBreakable() bool    { return false }
+func (z *Zombie) Effects() []effect.Effect   { return nil }
+func (z *Zombie) PistonImmovable() bool      { return false }
+func (z *Zombie) PistonBreakable() bool      { return false }
 
 func (z *Zombie) UUID() uuid.UUID {
 	if z.self == nil {

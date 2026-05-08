@@ -171,15 +171,15 @@ func (s *Silverfish) KnockBack(src mgl64.Vec3, f, h float64) {
 	}
 	s.self.data.Vel = s.mc.KnockBack(src, f, h, s.self.data.Pos)
 }
-func (s *Silverfish) Velocity() mgl64.Vec3     { return s.self.data.Vel }
-func (s *Silverfish) SetVelocity(v mgl64.Vec3) { s.self.data.Vel = v }
-func (s *Silverfish) Speed() float64           { return 0.25 }
-func (s *Silverfish) SetSpeed(v float64)       {}
-func (s *Silverfish) AddEffect(e effect.Effect) {}
+func (s *Silverfish) Velocity() mgl64.Vec3       { return s.self.data.Vel }
+func (s *Silverfish) SetVelocity(v mgl64.Vec3)   { s.self.data.Vel = v }
+func (s *Silverfish) Speed() float64             { return 0.25 }
+func (s *Silverfish) SetSpeed(v float64)         {}
+func (s *Silverfish) AddEffect(e effect.Effect)  {}
 func (s *Silverfish) RemoveEffect(e effect.Type) {}
-func (s *Silverfish) Effects() []effect.Effect { return nil }
-func (s *Silverfish) PistonImmovable() bool    { return false }
-func (s *Silverfish) PistonBreakable() bool    { return false }
+func (s *Silverfish) Effects() []effect.Effect   { return nil }
+func (s *Silverfish) PistonImmovable() bool      { return false }
+func (s *Silverfish) PistonBreakable() bool      { return false }
 
 // UUID returns the unique identifier of the entity.
 func (s *Silverfish) UUID() uuid.UUID {
