@@ -870,6 +870,30 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, disableRelative bool)
 			Volume:    1,
 			Pitch:     1.0,
 		})
+	case sound.ZombieAmbient:
+		pk.SoundType = packet.SoundEventAmbient
+		pk.EntityType = "minecraft:zombie"
+	case sound.ZombieHurt:
+		pk.SoundType = packet.SoundEventHurt
+		pk.EntityType = "minecraft:zombie"
+	case sound.ZombieDeath:
+		pk.SoundType = packet.SoundEventDeath
+		pk.EntityType = "minecraft:zombie"
+	case sound.ZombieStep:
+		pk.SoundType = packet.SoundEventStep
+		pk.EntityType = "minecraft:zombie"
+	case sound.SilverfishAmbient:
+		pk.SoundType = packet.SoundEventAmbient
+		pk.EntityType = "minecraft:silverfish"
+	case sound.SilverfishHurt:
+		pk.SoundType = packet.SoundEventHurt
+		pk.EntityType = "minecraft:silverfish"
+	case sound.SilverfishDeath:
+		pk.SoundType = packet.SoundEventDeath
+		pk.EntityType = "minecraft:silverfish"
+	case sound.SilverfishStep:
+		pk.SoundType = packet.SoundEventStep
+		pk.EntityType = "minecraft:silverfish"
 	}
 	s.writePacket(pk)
 }

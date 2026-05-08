@@ -11,17 +11,17 @@ import (
 	"unsafe"
 )
 
-// worldBridge implements MobsX-MC api.World.
-type worldBridge struct {
+// WorldBridge implements MobsX-MC api.World.
+type WorldBridge struct {
 	E *Ent
 }
 
-func (w worldBridge) Block(pos mmath.Pos) api.Block {
+func (w WorldBridge) Block(pos mmath.Pos) api.Block {
 	b := w.E.tx.Block(cube.Pos{pos.X(), pos.Y(), pos.Z()})
 	return blockBridge{b: b}
 }
 
-func (w worldBridge) Entities() []api.Entity {
+func (w WorldBridge) Entities() []api.Entity {
 	var ents []api.Entity
 	for e := range w.E.tx.Entities() {
 		ents = append(ents, EntityBridge{E: e, tx: w.E.tx})
@@ -130,6 +130,16 @@ func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 			e.tx.SetBlock(cube.Pos{pos.X(), pos.Y(), pos.Z()}, infested, nil)
 			e.tx.AddParticle(cube.Pos{pos.X(), pos.Y(), pos.Z()}.Vec3Centre(), particle.Evaporate{})
 			ent.Close()
+		}
+	}
+}
+
+func (e EntityBridge) Attack(target api.Entity, damage float64) {
+	if t, ok := target.(EntityBridge); ok {
+		if p, ok := t.E.(interface {
+			Hurt(damage float64, src world.DamageSource) (n float64, v bool)
+		}); ok {
+			p.Hurt(damage, AttackDamageSource{Attacker: e.E})
 		}
 	}
 }

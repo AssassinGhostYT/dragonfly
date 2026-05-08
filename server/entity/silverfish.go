@@ -43,7 +43,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 
 	if s.brain == nil {
 		s.brain = mobsx.NewBrain()
-		wBridge := worldBridge{E: e}
+		wBridge := WorldBridge{E: e}
 		s.navigator = mobsx.NewNavigator(EntityBridge{E: e, tx: tx}, wBridge)
 		s.navigator.Speed = 0.25
 
@@ -60,7 +60,7 @@ func (s *Silverfish) Tick(e *Ent, tx *world.Tx) *Movement {
 		s.brain.AddBehavior(behavior.NewWander(s.navigator, 10))
 	}
 
-	wBridge := worldBridge{E: e}
+	wBridge := WorldBridge{E: e}
 	s.navigator.Sync(wBridge)
 	s.brain.Tick(EntityBridge{E: e, tx: tx}, wBridge)
 
@@ -147,12 +147,14 @@ func (s *Silverfish) Hurt(damage float64, src world.DamageSource) (n float64, v 
 			s.alerted.Alerted = true
 		}
 		if s.self != nil {
+			s.self.tx.PlaySound(s.self.Position(), sound.SilverfishHurt{})
 			for _, v := range s.self.tx.Viewers(s.self.Position()) {
 				v.ViewEntityAction(s.self, HurtAction{})
 			}
 		}
 	}
 	if s.health <= 0 && s.self != nil {
+		s.self.tx.PlaySound(s.self.Position(), sound.SilverfishDeath{})
 		s.self.tx.AddParticle(s.self.Position(), particle.Evaporate{})
 		for _, v := range s.self.tx.Viewers(s.self.Position()) {
 			v.ViewEntityAction(s.self, DeathAction{})

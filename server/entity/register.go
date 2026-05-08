@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"github.com/df-mc/dragonfly/server/entity/mobs"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/item/creative"
 	"github.com/df-mc/dragonfly/server/item/enchantment"
@@ -14,6 +15,13 @@ func init() {
 	world.RegisterItem(silverfishEgg)
 	creative.RegisterItem(creative.Item{
 		Stack: item.NewStack(silverfishEgg, 1),
+		Group: "itemGroup.name.spawnEgg",
+	})
+
+	zombieEgg := item.SpawnEgg{Entity: mobs.ZombieType}
+	world.RegisterItem(zombieEgg)
+	creative.RegisterItem(creative.Item{
+		Stack: item.NewStack(zombieEgg, 1),
 		Group: "itemGroup.name.spawnEgg",
 	})
 }
@@ -37,6 +45,7 @@ var DefaultRegistry = conf.New([]world.EntityType{
 	TNTType,
 	TextType,
 	SilverfishType,
+	mobs.ZombieType,
 })
 
 var conf = world.EntityRegistryConfig{
