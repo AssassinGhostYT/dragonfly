@@ -62,9 +62,20 @@ func (s *Session) addSpecificMetadata(e any, m protocol.EntityMetadata) {
 	if bb, ok := e.(baby); ok && bb.Baby() {
 		m.SetFlag(protocol.EntityDataKeyFlags, protocol.EntityDataFlagBaby)
 	}
+
+	// Interaction text support for Ent-based entities and direct ones
+	interactText := ""
 	if i, ok := e.(interactable); ok {
-		m[protocol.EntityDataKeyInteractText] = i.InteractText()
+		interactText = i.InteractText()
+	} else if ent, ok := e.(interface{ Behaviour() any }); ok {
+		if i, ok := ent.Behaviour().(interactable); ok {
+			interactText = i.InteractText()
+		}
 	}
+	if interactText != "" {
+		m[protocol.EntityDataKeyInteractText] = interactText
+	}
+
 	if b, ok := e.(breather); ok {
 		m[protocol.EntityDataKeyAirSupply] = int16(b.AirSupply().Milliseconds() / 50)
 		m[protocol.EntityDataKeyAirSupplyMax] = int16(b.MaxAirSupply().Milliseconds() / 50)

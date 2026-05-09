@@ -14,6 +14,7 @@ import (
 	"github.com/df-mc/dragonfly/server/world/sound"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/google/uuid"
+	"math"
 	"math/rand"
 )
 
@@ -71,6 +72,21 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 	if c.panicTicks > 0 {
 		c.panicTicks--
 	}
+
+	// Search for a tempting player to look at
+	var temptingPlayer world.Entity
+	if c.loveTicks == 0 && c.panicTicks == 0 && c.scanner != nil {
+		for _, p := range c.scanner.Detected {
+			if bridge, ok := p.(EntityBridge); ok {
+				name, _ := bridge.HeldItem()
+				if name == "minecraft:wheat_seeds" || name == "minecraft:beetroot_seeds" || name == "minecraft:melon_seeds" || name == "minecraft:pumpkin_seeds" || name == "minecraft:torchflower_seeds" || name == "minecraft:pitcher_pod" || name == "minecraft:wheat" {
+					temptingPlayer = bridge.E
+					break
+				}
+			}
+		}
+	}
+
 	if c.loveTicks > 0 {
 		c.loveTicks--
 		if c.loveTicks%20 == 0 {
@@ -130,7 +146,7 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 		// Follow seeds (Wiki Bedrock: 16 blocks range)
 		c.brain.AddBehavior(behavior.NewPanic(c.navigator))
 		c.brain.AddBehavior(behavior.NewTempt(c.scanner, c.navigator, func(name string, meta int16) bool {
-			return name == "minecraft:wheat_seeds" || name == "minecraft:beetroot_seeds" || name == "minecraft:melon_seeds" || name == "minecraft:pumpkin_seeds" || name == "minecraft:torchflower_seeds" || name == "minecraft:pitcher_pod" || name == "minecraft:wheat" || name == "minecraft:seeds"
+			return name == "minecraft:wheat_seeds" || name == "minecraft:beetroot_seeds" || name == "minecraft:melon_seeds" || name == "minecraft:pumpkin_seeds" || name == "minecraft:torchflower_seeds" || name == "minecraft:pitcher_pod" || name == "minecraft:wheat"
 		}))
 		if c.baby {
 			c.brain.AddBehavior(behavior.NewFollowParent(c.navigator))
@@ -175,6 +191,20 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 
 	m := c.mc.TickMovement(e, e.data.Pos, e.data.Vel, e.data.Rot, tx)
 	
+	// Head looking logic
+	if temptingPlayer != nil {
+		pos := e.Position()
+		tPos := temptingPlayer.Position()
+		dx, dy, dz := tPos.X()-pos.X(), tPos.Y()-pos.Y()+1.6, tPos.Z()-pos.Z()
+		dist := math.Sqrt(dx*dx + dz*dz)
+		
+		angle := math.Atan2(dz, dx)
+		yaw := angle*180/math.Pi - 90
+		pitch := -math.Atan2(dy, dist) * 180 / math.Pi
+		
+		e.data.Rot = cube.Rotation{yaw, pitch}
+	}
+
 	if rand.Intn(400) == 0 {
 		tx.PlaySound(e.Position(), sound.ChickenAmbient{})
 	}
@@ -266,7 +296,8 @@ func (chickenType) EncodeEntity() string { return "minecraft:chicken" }
 func (chickenType) BBox(e world.Entity) cube.BBox {
 	if ent, ok := e.(*Ent); ok {
 		if c, ok := ent.data.Data.(*Chicken); ok && c.baby {
-			return cube.Box(-0.1, 0, -0.1, 0.1, 0.35, 0.1)
+			// Slightly larger bbox (Radius 0.15 instead of 0.1) to avoid getting stuck in block seams.
+			return cube.Box(-0.15, 0, -0.15, 0.15, 0.4, 0.15)
 		}
 	}
 	return cube.Box(-0.2, 0, -0.2, 0.2, 0.7, 0.2)
@@ -309,7 +340,7 @@ func (c *Chicken) Scale() float64 {
 	}
 	return 1.0
 }
-func (c *Chicken) InteractText() string { return "Alimentar" }
+func (c *Chicken) InteractText() string { return "action.interact.feed" }
 
 func (c *Chicken) Heal(health float64, src world.HealingSource) { c.health += health }
 func (c *Chicken) KnockBack(src mgl64.Vec3, f, h float64) {
