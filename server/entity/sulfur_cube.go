@@ -3,7 +3,6 @@ package entity
 import (
 	mobsx "github.com/AssassinGhostYT/MobsX-MC"
 	"github.com/AssassinGhostYT/MobsX-MC/behavior"
-	"github.com/AssassinGhostYT/MobsX-MC/sensor"
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/entity/effect"
@@ -15,7 +14,6 @@ import (
 	"github.com/google/uuid"
 	"math"
 	"math/rand"
-	"time"
 )
 
 // SulfurCube is a passive mob that can swallow blocks and change its physics.
@@ -111,7 +109,7 @@ func (s *SulfurCube) Archetype() string {
 	if s.swallowedBlock == nil {
 		return "none"
 	}
-	switch b := s.swallowedBlock.(type) {
+	switch s.swallowedBlock.(type) {
 	case block.Planks, block.Log:
 		return "bouncy"
 	case block.TNT:
@@ -130,7 +128,7 @@ func (s *SulfurCube) Archetype() string {
 		return "slow_bouncy"
 	case block.Iron, block.Gold, block.Netherite, block.Copper, block.RawIron, block.RawGold, block.RawCopper, block.CoalOre, block.IronOre, block.GoldOre, block.CopperOre, block.DiamondOre:
 		return "slow_flat" // Called "Medicine Ball" (Heavy)
-	case block.Mushroom, block.Mud, block.Resin: // Approximations for Sliding
+	case block.Mud, block.Resin: // Approximations for Sliding
 		return "slow_sliding"
 	case block.Honeycomb:
 		return "sticky"
@@ -185,7 +183,7 @@ func (s *SulfurCube) Tick(e *Ent, tx *world.Tx) *Movement {
 	if s.Archetype() == "hot" && tx.World().Time()%20 == 0 {
 		for ent := range tx.EntitiesWithin(e.H().Type().BBox(e).Grow(0.5).Translate(e.Position())) {
 			if ent.H().UUID() != e.H().UUID() {
-				if l, ok := ent.(living); ok && !l.Dead() {
+				if l, ok := ent.(Living); ok && !l.Dead() {
 					if h, ok := ent.(interface{ Hurt(float64, world.DamageSource) (float64, bool) }); ok {
 						h.Hurt(1.0, block.FireDamageSource{})
 					}
@@ -197,17 +195,17 @@ func (s *SulfurCube) Tick(e *Ent, tx *world.Tx) *Movement {
 	// Movement: Jumps (only if not immobilized by block)
 	m := s.mc.TickMovement(e, e.data.Pos, e.data.Vel, e.data.Rot, tx)
 	if s.swallowedBlock == nil {
-		if m.OnGround {
+		if m.onGround {
 			s.jumpTicks++
 			if s.jumpTicks >= 20+rand.Intn(20) {
 				e.data.Vel[1] = 0.42
 				// Small forward boost if wandering
 				if !s.navigator.Path.AtEnd() {
 					yaw := float64(e.Rotation().Yaw())
-					s.mc.Move(e, mgl64.Vec3{-math.Sin(yaw * math.Pi / 180), 0, math.Cos(yaw * math.Pi / 180)}.Mul(0.2))
+					e.data.Vel = e.data.Vel.Add(mgl64.Vec3{-math.Sin(yaw * math.Pi / 180), 0, math.Cos(yaw * math.Pi / 180)}.Mul(0.2))
 				}
 				s.jumpTicks = 0
-				tx.PlaySound(e.Position(), sound.SlimeJump{})
+				tx.PlaySound(e.Position(), sound.Pop{})
 			}
 		}
 	} else {
@@ -218,7 +216,7 @@ func (s *SulfurCube) Tick(e *Ent, tx *world.Tx) *Movement {
 	// Block absorption (Pickup items)
 	if s.size == 2 && s.swallowedBlock == nil && s.pickupTimer <= 0 {
 		for ent := range tx.EntitiesWithin(e.H().Type().BBox(e).Grow(1.0).Translate(e.Position())) {
-			if itemEnt, ok := ent.(interface{ Behaviour() world.EntityBehaviour }); ok {
+			if itemEnt, ok := ent.(interface{ Behaviour() Behaviour }); ok {
 				if b, ok := itemEnt.Behaviour().(*ItemBehaviour); ok {
 					if bl, ok := b.Item().Item().(world.Block); ok {
 						// Simple check: most cubes are swallowable
@@ -245,7 +243,7 @@ func (s *SulfurCube) swallow(tx *world.Tx, b world.Block) {
 	}
 	s.swallowedBlock = b
 	s.updatePhysics()
-	tx.PlaySound(s.self.Position(), sound.SlimeAttack{}) // Placeholder for absorb sound
+	tx.PlaySound(s.self.Position(), sound.Attack{Damage: false}) // Placeholder for absorb sound
 	for _, v := range tx.Viewers(s.self.Position()) {
 		v.ViewEntityState(s.self)
 	}
@@ -260,12 +258,14 @@ func (s *SulfurCube) eject(tx *world.Tx) {
 		Position: s.self.Position().Add(mgl64.Vec3{0, 0.5, 0}),
 		Velocity: mgl64.Vec3{rand.Float64()*0.2 - 0.1, 0.3, rand.Float64()*0.2 - 0.1},
 	}
-	tx.AddEntity(NewItem(opts, item.NewStack(s.swallowedBlock, 1)))
+	if it, ok := s.swallowedBlock.(world.Item); ok {
+		tx.AddEntity(NewItem(opts, item.NewStack(it, 1)))
+	}
 	s.swallowedBlock = nil
 	s.pickupTimer = 100
 	s.fuse = -1
 	s.updatePhysics()
-	tx.PlaySound(s.self.Position(), sound.ItemFrameRemoveItem{}) // Placeholder for eject sound
+	tx.PlaySound(s.self.Position(), sound.ItemFrameRemove{}) // Placeholder for eject sound
 	for _, v := range tx.Viewers(s.self.Position()) {
 		v.ViewEntityState(s.self)
 	}
@@ -293,7 +293,7 @@ func (s *SulfurCube) Hurt(damage float64, src world.DamageSource) (n float64, v 
 	// Resistance if holding a block
 	if s.swallowedBlock != nil {
 		switch src.(type) {
-		case AttackDamageSource, ProjectileDamageSource, block.ExplosionConfig:
+		case AttackDamageSource, ProjectileDamageSource, ExplosionDamageSource:
 			// "receive more recoil instead of damage"
 			return 0, true 
 		}
@@ -301,7 +301,7 @@ func (s *SulfurCube) Hurt(damage float64, src world.DamageSource) (n float64, v 
 
 	s.health -= damage
 	if s.health > 0 && damage > 0 {
-		s.self.tx.PlaySound(s.self.Position(), sound.SlimeHurt{})
+		s.self.tx.PlaySound(s.self.Position(), sound.Attack{Damage: true})
 		for _, v := range s.self.tx.Viewers(s.self.Position()) {
 			v.ViewEntityAction(s.self, HurtAction{})
 		}
@@ -309,7 +309,7 @@ func (s *SulfurCube) Hurt(damage float64, src world.DamageSource) (n float64, v 
 
 	if s.health <= 0 && s.self != nil {
 		s.self.tx.AddParticle(s.self.Position(), particle.Evaporate{})
-		s.self.tx.PlaySound(s.self.Position(), sound.SlimeDeath{})
+		s.self.tx.PlaySound(s.self.Position(), sound.Attack{Damage: true})
 		for _, v := range s.self.tx.Viewers(s.self.Position()) {
 			v.ViewEntityAction(s.self, DeathAction{})
 		}
@@ -325,7 +325,9 @@ func (s *SulfurCube) Hurt(damage float64, src world.DamageSource) (n float64, v 
 			}
 			// Drop swallowed block
 			if s.swallowedBlock != nil {
-				s.self.tx.AddEntity(NewItem(world.EntitySpawnOpts{Position: s.self.Position()}, item.NewStack(s.swallowedBlock, 1)))
+				if it, ok := s.swallowedBlock.(world.Item); ok {
+					s.self.tx.AddEntity(NewItem(world.EntitySpawnOpts{Position: s.self.Position()}, item.NewStack(it, 1)))
+				}
 			}
 			// Drop XP
 			for _, handle := range NewExperienceOrbs(s.self.Position(), rand.Intn(2)+1) {
