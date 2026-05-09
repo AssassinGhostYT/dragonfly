@@ -34,6 +34,7 @@ type Chicken struct {
 
 	loveTicks     int
 	breedCooldown int
+	panicTicks    int
 }
 
 // NewChicken creates a new Chicken entity.
@@ -66,6 +67,9 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 	if c.breedCooldown > 0 {
 		c.breedCooldown--
 	}
+	if c.panicTicks > 0 {
+		c.panicTicks--
+	}
 	if c.loveTicks > 0 {
 		c.loveTicks--
 		if c.loveTicks%20 == 0 {
@@ -75,7 +79,7 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 		}
 		
 		// Search for partner
-		if c.loveTicks > 0 {
+		if c.loveTicks > 0 && c.panicTicks == 0 {
 			var partner *Chicken
 			for other := range tx.EntitiesWithin(e.H().Type().BBox(e).Grow(8.0).Translate(e.Position())) {
 				if other.H().UUID() == e.H().UUID() { continue }
@@ -121,7 +125,8 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 		c.navigator.Speed = 0.25
 
 		c.scanner = &sensor.PlayerSensor{Range: 16}
-		// Follow seeds (Wheat, Beetroot, Melon, Pumpkin)
+		// Follow seeds (Wiki Bedrock: 16 blocks range)
+		c.brain.AddBehavior(behavior.NewPanic(c.navigator))
 		c.brain.AddBehavior(behavior.NewTempt(c.scanner, c.navigator, func(name string, meta int16) bool {
 			return name == "minecraft:wheat" || name == "minecraft:beetroot_seeds" || name == "minecraft:melon_seeds" || name == "minecraft:pumpkin_seeds" || name == "minecraft:torchflower_seeds" || name == "minecraft:pitcher_pod"
 		}))
@@ -198,6 +203,7 @@ func (c *Chicken) Hurt(damage float64, src world.DamageSource) (n float64, v boo
 		return 0, false
 	}
 	c.health -= damage
+	c.panicTicks = 60 // 3 seconds of panic
 	if c.health > 0 && damage > 0 {
 		c.self.tx.PlaySound(c.self.Position(), sound.ChickenHurt{})
 		for _, v := range c.self.tx.Viewers(c.self.Position()) {
@@ -294,6 +300,7 @@ func (c *Chicken) MaxHealth() float64     { return 4 }
 func (c *Chicken) SetMaxHealth(v float64) { c.health = v }
 func (c *Chicken) Dead() bool             { return c.health <= 0 }
 func (c *Chicken) Baby() bool             { return c.baby }
+func (c *Chicken) Panicking() bool        { return c.panicTicks > 0 }
 func (c *Chicken) Scale() float64 {
 	if c.baby {
 		return 0.5

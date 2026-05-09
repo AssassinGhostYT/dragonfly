@@ -119,6 +119,13 @@ func (e EntityBridge) HeldItem() (name string, meta int16) {
 	return "", 0
 }
 
+func (e EntityBridge) Panicking() bool {
+	if l, ok := e.E.(interface{ Panicking() bool }); ok {
+		return l.Panicking()
+	}
+	return false
+}
+
 func (e EntityBridge) HideInBlock(pos mmath.Pos) {
 	if ent, ok := e.E.(*Ent); ok {
 		b := e.tx.Block(cube.Pos{pos.X(), pos.Y(), pos.Z()})
