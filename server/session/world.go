@@ -1081,7 +1081,7 @@ func (s *Session) ViewEntityAction(e world.Entity, a world.EntityAction) {
 	case entity.TotemUseAction:
 		s.writePacket(&packet.ActorEvent{
 			EntityRuntimeID: s.entityRuntimeID(e),
-			EventType:       packet.ActorEventTotemUsed,
+			EventType:       packet.ActorEventTalismanActivate,
 		})
 	case entity.InLoveAction:
 		s.writePacket(&packet.ActorEvent{
@@ -1089,7 +1089,7 @@ func (s *Session) ViewEntityAction(e world.Entity, a world.EntityAction) {
 			EventType:       packet.ActorEventInLoveHearts,
 		})
 	}
-	}
+}
 
 // ViewEntityState ...
 func (s *Session) ViewEntityState(e world.Entity) {
