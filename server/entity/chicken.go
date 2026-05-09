@@ -55,7 +55,7 @@ func NewChickenBaby(opts world.EntitySpawnOpts) *world.EntityHandle {
 }
 
 func (c *Chicken) Apply(data *world.EntityData) {
-	c.mc = &MovementComputer{Gravity: 0.08, Drag: 0.02, StepHeight: 0.5}
+	c.mc = &MovementComputer{Gravity: 0.08, Drag: 0.02, StepHeight: 1.0}
 	data.Data = c
 }
 
@@ -124,13 +124,13 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 		wBridge := WorldBridge{E: e}
 		c.navigator = mobsx.NewNavigator(EntityBridge{E: e, tx: tx}, wBridge)
 		c.navigator.Finder.Height = 1
-		c.navigator.Speed = 0.25
+		c.navigator.Speed = 0.15
 
 		c.scanner = &sensor.PlayerSensor{Range: 16}
 		// Follow seeds (Wiki Bedrock: 16 blocks range)
 		c.brain.AddBehavior(behavior.NewPanic(c.navigator))
 		c.brain.AddBehavior(behavior.NewTempt(c.scanner, c.navigator, func(name string, meta int16) bool {
-			return name == "minecraft:wheat_seeds" || name == "minecraft:beetroot_seeds" || name == "minecraft:melon_seeds" || name == "minecraft:pumpkin_seeds" || name == "minecraft:torchflower_seeds" || name == "minecraft:pitcher_pod"
+			return name == "minecraft:wheat_seeds" || name == "minecraft:beetroot_seeds" || name == "minecraft:melon_seeds" || name == "minecraft:pumpkin_seeds" || name == "minecraft:torchflower_seeds" || name == "minecraft:pitcher_pod" || name == "minecraft:wheat" || name == "minecraft:seeds"
 		}))
 		if c.baby {
 			c.brain.AddBehavior(behavior.NewFollowParent(c.navigator))

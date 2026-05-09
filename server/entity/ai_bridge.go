@@ -72,7 +72,7 @@ func (e EntityBridge) SetPosition(pos [3]float64) {
 
 		// For small movements, use velocity to make it smooth.
 		if diff.Len() < 1.0 {
-			ent.data.Vel = mgl64.Vec3{diff.X() * 1.5, ent.data.Vel.Y(), diff.Z() * 1.5}
+			ent.data.Vel = mgl64.Vec3{diff.X() * 0.8, ent.data.Vel.Y(), diff.Z() * 0.8}
 		} else {
 			// For large movements, teleport.
 			ent.data.Pos = target
@@ -101,12 +101,7 @@ func (e EntityBridge) ID() int64 {
 }
 
 func (e EntityBridge) IsPlayer() bool {
-	if p, ok := e.E.(interface {
-		GameMode() world.GameMode
-	}); ok {
-		return p.GameMode().AllowsTakingDamage()
-	}
-	return false
+	return e.E.H().Type().EncodeEntity() == "minecraft:player"
 }
 
 func (e EntityBridge) HeldItem() (name string, meta int16) {
