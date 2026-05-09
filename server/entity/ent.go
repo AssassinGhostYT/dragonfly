@@ -41,6 +41,16 @@ func (e *Ent) Behaviour() Behaviour {
 	return e.data.Data.(Behaviour)
 }
 
+// UseOnEntity proxies the interaction to the underlying behaviour if it implements it.
+func (e *Ent) UseOnEntity(tx *world.Tx, user item.User, held item.Stack) bool {
+	if b, ok := e.Behaviour().(interface {
+		UseOnEntity(tx *world.Tx, user item.User, held item.Stack) bool
+	}); ok {
+		return b.UseOnEntity(tx, user, held)
+	}
+	return false
+}
+
 // Explode propagates the explosion behaviour of the underlying Behaviour.
 func (e *Ent) Explode(src mgl64.Vec3, impact float64, conf block.ExplosionConfig) {
 	if expl, ok := e.Behaviour().(interface {
