@@ -3,6 +3,7 @@ module github.com/df-mc/dragonfly
 go 1.26.0
 
 require (
+	github.com/AssassinGhostYT/MobsX-MC v0.0.0-20260509044327-603083513384
 	github.com/brentp/intintmap v0.0.0-20190211203843-30dc0ade9af9
 	github.com/cespare/xxhash/v2 v2.3.0
 	github.com/df-mc/goleveldb v1.1.9
@@ -16,7 +17,6 @@ require (
 	golang.org/x/mod v0.22.0
 	golang.org/x/text v0.23.0
 	golang.org/x/tools v0.28.0
-	github.com/AssassinGhostYT/MobsX-MC v0.0.0-20260505051052-bfc425a1e742
 )
 
 require (

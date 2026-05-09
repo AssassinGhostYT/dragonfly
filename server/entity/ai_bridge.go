@@ -2,7 +2,7 @@ package entity
 
 import (
 	"github.com/AssassinGhostYT/MobsX-MC/api"
-	"github.com/AssassinGhostYT/MobsX-MC/internal/math"
+	"github.com/AssassinGhostYT/MobsX-MC/mmath"
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/world"

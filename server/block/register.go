@@ -130,6 +130,11 @@ func init() {
 	world.RegisterBlock(PolishedTuff{})
 	world.RegisterBlock(ShortGrass{})
 	world.RegisterBlock(Fern{})
+	world.RegisterBlock(Sculk{})
+	world.RegisterBlock(SculkCatalyst{})
+	registerAll(allSculkSensors())
+	registerAll(allSculkShriekers())
+	registerAll(allSculkVeins())
 
 	for _, ore := range OreTypes() {
 		world.RegisterBlock(CoalOre{Type: ore})
@@ -403,6 +408,11 @@ func init() {
 	world.RegisterItem(TuffBricks{Chiseled: true})
 	world.RegisterItem(PolishedTuff{})
 	world.RegisterItem(Vines{})
+	world.RegisterItem(Sculk{})
+	world.RegisterItem(SculkCatalyst{})
+	world.RegisterItem(SculkSensor{})
+	world.RegisterItem(SculkShrieker{})
+	world.RegisterItem(SculkVein{})
 	world.RegisterItem(WheatSeeds{})
 	world.RegisterItem(DecoratedPot{})
 	world.RegisterItem(ShortGrass{})
