@@ -130,7 +130,7 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 		// Follow seeds (Wiki Bedrock: 16 blocks range)
 		c.brain.AddBehavior(behavior.NewPanic(c.navigator))
 		c.brain.AddBehavior(behavior.NewTempt(c.scanner, c.navigator, func(name string, meta int16) bool {
-			return name == "minecraft:wheat_seeds" || name == "minecraft:beetroot_seeds" || name == "minecraft:melon_seeds" || name == "minecraft:pumpkin_seeds" || name == "minecraft:torchflower_seeds" || name == "minecraft:pitcher_pod" || name == "minecraft:seeds"
+			return name == "minecraft:wheat_seeds" || name == "minecraft:beetroot_seeds" || name == "minecraft:melon_seeds" || name == "minecraft:pumpkin_seeds" || name == "minecraft:torchflower_seeds" || name == "minecraft:pitcher_pod"
 		}))
 		if c.baby {
 			c.brain.AddBehavior(behavior.NewFollowParent(c.navigator))
