@@ -31,6 +31,9 @@ type Chicken struct {
 
 	eggTimer int
 	variant  int // 0: Tempered, 1: Warm, 2: Cold
+
+	loveTicks     int
+	breedCooldown int
 }
 
 // NewChicken creates a new Chicken entity.
@@ -60,23 +63,75 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 		return nil
 	}
 
+	if c.breedCooldown > 0 {
+		c.breedCooldown--
+	}
+	if c.loveTicks > 0 {
+		c.loveTicks--
+		if c.loveTicks%20 == 0 {
+			for _, v := range tx.Viewers(e.Position()) {
+				v.ViewEntityAction(e, InLoveAction{})
+			}
+		}
+		
+		// Search for partner
+		if c.loveTicks > 0 {
+			var partner *Chicken
+			for other := range tx.EntitiesWithin(e.H().Type().BBox(e).Grow(8.0).Translate(e.Position())) {
+				if other.H().UUID() == e.H().UUID() { continue }
+				if ent, ok := other.(*Ent); ok {
+					if c2, ok := ent.data.Data.(*Chicken); ok && c2.loveTicks > 0 && !c2.baby {
+						partner = c2
+						break
+					}
+				}
+			}
+			
+			if partner != nil {
+				dist := e.Position().Sub(partner.self.Position()).Len()
+				if dist < 1.0 {
+					// Breed!
+					c.loveTicks = 0
+					partner.loveTicks = 0
+					c.breedCooldown = 6000
+					partner.breedCooldown = 6000
+					
+					opts := world.EntitySpawnOpts{Position: e.Position()}
+					tx.AddEntity(NewChickenBaby(opts))
+					
+					for _, v := range tx.Viewers(e.Position()) {
+						v.ViewEntityAction(e, InLoveAction{}) // Extra hearts
+					}
+					for _, handle := range NewExperienceOrbs(e.Position(), rand.Intn(7)+1) {
+						tx.AddEntity(handle)
+					}
+				} else {
+					// Move to partner
+					c.navigator.SetTarget(cube.PosFromVec3(partner.self.Position()))
+				}
+			}
+		}
+	}
+
 	if c.brain == nil {
 		c.brain = mobsx.NewBrain()
 		wBridge := WorldBridge{E: e}
 		c.navigator = mobsx.NewNavigator(EntityBridge{E: e, tx: tx}, wBridge)
 		c.navigator.Finder.Height = 1
 		c.navigator.Speed = 0.25
-c.scanner = &sensor.PlayerSensor{Range: 16}
-// Follow seeds (Wheat, Beetroot, Melon, Pumpkin)
-c.brain.AddBehavior(behavior.NewTempt(c.scanner, c.navigator, func(name string, meta int16) bool {
-	return name == "minecraft:wheat" || name == "minecraft:beetroot_seeds" || name == "minecraft:melon_seeds" || name == "minecraft:pumpkin_seeds" || name == "minecraft:torchflower_seeds" || name == "minecraft:pitcher_pod"
-}))
-if c.baby {
-	c.brain.AddBehavior(behavior.NewFollowParent(c.navigator))
-}
-c.brain.AddSensor(c.scanner)
-c.brain.AddBehavior(behavior.NewWander(c.navigator, 10)) // Radius 10 blocks
-}
+
+		c.scanner = &sensor.PlayerSensor{Range: 16}
+		// Follow seeds (Wheat, Beetroot, Melon, Pumpkin)
+		c.brain.AddBehavior(behavior.NewTempt(c.scanner, c.navigator, func(name string, meta int16) bool {
+			return name == "minecraft:wheat" || name == "minecraft:beetroot_seeds" || name == "minecraft:melon_seeds" || name == "minecraft:pumpkin_seeds" || name == "minecraft:torchflower_seeds" || name == "minecraft:pitcher_pod"
+		}))
+		if c.baby {
+			c.brain.AddBehavior(behavior.NewFollowParent(c.navigator))
+		}
+		c.brain.AddSensor(c.scanner)
+		c.brain.AddBehavior(behavior.NewWander(c.navigator, 10))
+		
+		// Set variant based on biome if spawned naturally
 		pos := cube.PosFromVec3(e.Position())
 		temp := tx.Temperature(pos)
 		if temp < 0.2 {
@@ -289,7 +344,13 @@ func (c *Chicken) UseOnEntity(tx *world.Tx, user item.User, held item.Stack) boo
 			}
 			return true
 		}
-		return true
+		if c.breedCooldown == 0 && c.loveTicks == 0 {
+			c.loveTicks = 600
+			for _, v := range tx.Viewers(c.self.Position()) {
+				v.ViewEntityAction(c.self, InLoveAction{})
+			}
+			return true
+		}
 	case block.Flower:
 		if it.Type == block.Dandelion() && c.baby {
 			return true

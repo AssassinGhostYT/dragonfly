@@ -59,6 +59,9 @@ type FireworkExplosionAction struct{ action }
 // TotemUseAction is a world.EntityAction that displays the totem use particles and animation.
 type TotemUseAction struct{ action }
 
+// InLoveAction is a world.EntityAction that displays the heart particles around an entity when it is in love.
+type InLoveAction struct{ action }
+
 // action implements the Action interface. Structures in this package may embed it to gets its functionality
 // out of the box.
 type action struct{}
