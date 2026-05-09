@@ -5,6 +5,7 @@ import (
 	"github.com/AssassinGhostYT/MobsX-MC/mmath"
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/df-mc/dragonfly/server/world/particle"
 	"github.com/go-gl/mathgl/mgl64"
@@ -106,6 +107,16 @@ func (e EntityBridge) IsPlayer() bool {
 		return p.GameMode().AllowsTakingDamage()
 	}
 	return false
+}
+
+func (e EntityBridge) HeldItem() (name string, meta int16) {
+	if p, ok := e.E.(interface {
+		HeldItems() (item.Stack, item.Stack)
+	}); ok {
+		held, _ := p.HeldItems()
+		return held.Item().EncodeItem()
+	}
+	return "", 0
 }
 
 func (e EntityBridge) HideInBlock(pos mmath.Pos) {

@@ -3,6 +3,7 @@ package entity
 import (
 	mobsx "github.com/AssassinGhostYT/MobsX-MC"
 	"github.com/AssassinGhostYT/MobsX-MC/behavior"
+	"github.com/AssassinGhostYT/MobsX-MC/sensor"
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/entity/effect"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/google/uuid"
 	"math/rand"
+	"time"
 )
 
 // Chicken is a passive mob that lays eggs and is immune to fall damage.
@@ -21,6 +23,7 @@ type Chicken struct {
 	navigator *mobsx.Navigator
 	mc        *MovementComputer
 	self      *Ent
+	scanner   *sensor.PlayerSensor
 
 	health float64
 
@@ -65,6 +68,12 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 		c.navigator.Finder.Height = 1
 		c.navigator.Speed = 0.25
 
+		c.scanner = &sensor.PlayerSensor{Range: 16}
+		// Follow seeds (Wheat, Beetroot, Melon, Pumpkin)
+		c.brain.AddBehavior(behavior.NewFollow(c.scanner, c.navigator, func(name string, meta int16) bool {
+			return name == "minecraft:wheat_seeds" || name == "minecraft:beetroot_seeds" || name == "minecraft:melon_seeds" || name == "minecraft:pumpkin_seeds" || name == "minecraft:torchflower_seeds" || name == "minecraft:pitcher_pod"
+		}))
+		c.brain.AddSensor(c.scanner)
 		c.brain.AddBehavior(behavior.NewWander(c.navigator, 80))
 		
 		// Set variant based on biome if spawned naturally
