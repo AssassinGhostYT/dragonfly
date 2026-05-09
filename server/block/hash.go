@@ -999,11 +999,6 @@ func (InfestedCobblestone) Hash() (uint64, uint64) {
 	return hashInfestedCobblestone, 0
 }
 
-
-
-
-
 func (i InfestedDeepslate) Hash() (uint64, uint64) {
 	return hashInfestedDeepslate, uint64(i.Axis)
 }
-

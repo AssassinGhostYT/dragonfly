@@ -94,12 +94,14 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 				v.ViewEntityAction(e, InLoveAction{})
 			}
 		}
-		
+
 		// Search for partner
 		if c.loveTicks > 0 && c.panicTicks == 0 {
 			var partner *Chicken
 			for other := range tx.EntitiesWithin(e.H().Type().BBox(e).Grow(8.0).Translate(e.Position())) {
-				if other.H().UUID() == e.H().UUID() { continue }
+				if other.H().UUID() == e.H().UUID() {
+					continue
+				}
 				if ent, ok := other.(*Ent); ok {
 					if c2, ok := ent.data.Data.(*Chicken); ok && c2.loveTicks > 0 && !c2.baby {
 						partner = c2
@@ -107,7 +109,7 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 					}
 				}
 			}
-			
+
 			if partner != nil {
 				dist := e.Position().Sub(partner.self.Position()).Len()
 				if dist < 1.0 {
@@ -116,10 +118,10 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 					partner.loveTicks = 0
 					c.breedCooldown = 6000
 					partner.breedCooldown = 6000
-					
+
 					opts := world.EntitySpawnOpts{Position: e.Position()}
 					tx.AddEntity(NewChickenBaby(opts))
-					
+
 					for _, v := range tx.Viewers(e.Position()) {
 						v.ViewEntityAction(e, InLoveAction{}) // Extra hearts
 					}
@@ -153,7 +155,7 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 		}
 		c.brain.AddSensor(c.scanner)
 		c.brain.AddBehavior(behavior.NewWander(c.navigator, 10))
-		
+
 		// Set variant based on biome if spawned naturally
 		pos := cube.PosFromVec3(e.Position())
 		temp := tx.Temperature(pos)
@@ -195,16 +197,16 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 		tPos := temptingPlayer.Position()
 		dx, dy, dz := tPos.X()-pos.X(), tPos.Y()-pos.Y()+0.5, tPos.Z()-pos.Z()
 		dist := math.Sqrt(dx*dx + dz*dz)
-		
+
 		angle := math.Atan2(dz, dx)
 		yaw := angle*180/math.Pi - 90
 		pitch := -math.Atan2(dy, dist) * 180 / math.Pi
-		
+
 		e.data.Rot = cube.Rotation{yaw, pitch}
 	}
 
 	m := c.mc.TickMovement(e, e.data.Pos, e.data.Vel, e.data.Rot, tx)
-	
+
 	if rand.Intn(400) == 0 {
 		tx.PlaySound(e.Position(), sound.ChickenAmbient{})
 	}
@@ -248,7 +250,7 @@ func (c *Chicken) Hurt(damage float64, src world.DamageSource) (n float64, v boo
 		for _, v := range c.self.tx.Viewers(c.self.Position()) {
 			v.ViewEntityAction(c.self, DeathAction{})
 		}
-		
+
 		spawnPos := c.self.Position().Add(mgl64.Vec3{0, 0.3, 0})
 		if !c.baby {
 			for _, handle := range NewExperienceOrbs(spawnPos, rand.Intn(3)+1) {
@@ -321,7 +323,7 @@ func (chickenType) EncodeNBT(data *world.EntityData) map[string]any {
 			baby = 1
 		}
 		return map[string]any{
-			"IsBaby": baby,
+			"IsBaby":  baby,
 			"Variant": int32(c.variant),
 		}
 	}
@@ -345,7 +347,9 @@ func (c *Chicken) InteractText() string { return "action.interact.feed" }
 
 func (c *Chicken) Heal(health float64, src world.HealingSource) { c.health += health }
 func (c *Chicken) KnockBack(src mgl64.Vec3, f, h float64) {
-	if c.self == nil { return }
+	if c.self == nil {
+		return
+	}
 	c.self.data.Vel = c.mc.KnockBack(src, f, h, c.self.data.Pos)
 }
 func (c *Chicken) Velocity() mgl64.Vec3       { return c.self.data.Vel }
@@ -359,12 +363,16 @@ func (c *Chicken) PistonImmovable() bool      { return false }
 func (c *Chicken) PistonBreakable() bool      { return false }
 
 func (c *Chicken) UUID() uuid.UUID {
-	if c.self == nil { return uuid.UUID{} }
+	if c.self == nil {
+		return uuid.UUID{}
+	}
 	return c.self.H().UUID()
 }
 
 func (c *Chicken) DeathPosition() (mgl64.Vec3, world.Dimension, bool) {
-	if c.self == nil { return mgl64.Vec3{}, nil, c.Dead() }
+	if c.self == nil {
+		return mgl64.Vec3{}, nil, c.Dead()
+	}
 	return c.self.Position(), c.self.tx.World().Dimension(), c.Dead()
 }
 

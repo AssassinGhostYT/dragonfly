@@ -29,10 +29,10 @@ type Zombie struct {
 	health    float64
 	deadTicks int
 
-	baby               bool
-	equipment          []item.Stack
-	doorBreakingTicks  int
-	currentDoorPos     cube.Pos
+	baby              bool
+	equipment         []item.Stack
+	doorBreakingTicks int
+	currentDoorPos    cube.Pos
 }
 
 // NewZombie creates a new Zombie entity.
@@ -95,7 +95,7 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		}
 		z.navigator.Speed = 0.23
 		if z.baby {
-			z.navigator.Speed = 0.45 
+			z.navigator.Speed = 0.45
 		}
 
 		z.scanner = &sensor.PlayerSensor{Range: 35}
@@ -110,9 +110,10 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 	// Wiki Damage Scaling
 	diff := tx.World().Difficulty()
 	baseDmg := 3.0 // Normal
-	if diff == world.DifficultyEasy {
+	switch diff {
+	case world.DifficultyEasy:
 		baseDmg = 2.5
-	} else if diff == world.DifficultyHard {
+	case world.DifficultyHard:
 		baseDmg = 4.5
 	}
 
@@ -126,9 +127,10 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 	totalDmg := baseDmg + weaponDmg
 	if weaponDmg > 0 {
 		// Weapon scaling
-		if diff == world.DifficultyEasy {
+		switch diff {
+		case world.DifficultyEasy:
 			totalDmg = 0.5*totalDmg + 1
-		} else if diff == world.DifficultyHard {
+		case world.DifficultyHard:
 			totalDmg = 1.5 * totalDmg
 		}
 	}
@@ -167,7 +169,7 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 		var doorPos cube.Pos
 		rot := e.Rotation()
 		lookingAt := cube.PosFromVec3(e.Position().Add(cube.Rotation{rot.Yaw(), 0}.Vec3().Mul(0.7)))
-		
+
 		if door, ok := tx.Block(lookingAt).(block.WoodDoor); ok && !door.Open {
 			doorPos = lookingAt
 		}
@@ -193,7 +195,7 @@ func (z *Zombie) Tick(e *Ent, tx *world.Tx) *Movement {
 				z.doorBreakingTicks = 0
 				z.currentDoorPos = cube.Pos{}
 			}
-			e.data.Pos, e.data.Vel = m.pos, e.data.Vel
+			e.data.Pos = m.pos
 			return m
 		} else if z.currentDoorPos != (cube.Pos{}) {
 			z.stopCracking(tx, z.currentDoorPos)
@@ -332,7 +334,7 @@ func (z *Zombie) Hurt(damage float64, src world.DamageSource) (n float64, v bool
 		for _, v := range z.self.tx.Viewers(z.self.Position()) {
 			v.ViewEntityAction(z.self, DeathAction{})
 		}
-		
+
 		// Spread drops to avoid shadows and ensure they can be picked up
 		spawnPos := z.self.Position().Add(mgl64.Vec3{0, 0.5, 0})
 		for _, handle := range NewExperienceOrbs(spawnPos, z.Experience()) {
