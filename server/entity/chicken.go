@@ -3,6 +3,7 @@ package entity
 import (
 	mobsx "github.com/AssassinGhostYT/MobsX-MC"
 	"github.com/AssassinGhostYT/MobsX-MC/behavior"
+	"github.com/AssassinGhostYT/MobsX-MC/mmath"
 	"github.com/AssassinGhostYT/MobsX-MC/sensor"
 	"github.com/df-mc/dragonfly/server/block"
 	"github.com/df-mc/dragonfly/server/block/cube"
@@ -111,7 +112,8 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 					}
 				} else {
 					// Move to partner
-					c.navigator.SetTarget(cube.PosFromVec3(partner.self.Position()))
+					pPos := cube.PosFromVec3(partner.self.Position())
+					c.navigator.SetTarget(mmath.Pos{pPos.X(), pPos.Y(), pPos.Z()})
 				}
 			}
 		}
