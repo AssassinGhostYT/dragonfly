@@ -23,6 +23,12 @@ var NewZombie func(opts world.EntitySpawnOpts) *world.EntityHandle
 // NewZombieBaby is a function that can be used to create a new baby zombie entity. It is set by the entity package.
 var NewZombieBaby func(opts world.EntitySpawnOpts) *world.EntityHandle
 
+// NewChicken is a function that can be used to create a new chicken entity. It is set by the entity package.
+var NewChicken func(opts world.EntitySpawnOpts) *world.EntityHandle
+
+// NewChickenBaby is a function that can be used to create a new baby chicken entity. It is set by the entity package.
+var NewChickenBaby func(opts world.EntitySpawnOpts) *world.EntityHandle
+
 // UseOnBlock spawns the entity at the position of the block clicked.
 func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, tx *world.Tx, user User, ctx *UseContext) bool {
 	if s.Entity == nil {
@@ -46,6 +52,12 @@ func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, 
 		} else {
 			return false
 		}
+	case "minecraft:chicken":
+		if NewChicken != nil {
+			tx.AddEntity(NewChicken(opts))
+		} else {
+			return false
+		}
 	default:
 		return false
 	}
@@ -60,11 +72,23 @@ func (s SpawnEgg) UseOnEntity(e world.Entity, tx *world.Tx, user User, ctx *UseC
 		return false
 	}
 
-	if e.H().Type().EncodeEntity() == s.Entity.EncodeEntity() && s.Entity.EncodeEntity() == "minecraft:zombie" {
-		if NewZombieBaby != nil {
-			tx.AddEntity(NewZombieBaby(world.EntitySpawnOpts{Position: e.Position()}))
-			ctx.SubtractFromCount(1)
-			return true
+	name := s.Entity.EncodeEntity()
+	targetName := e.H().Type().EncodeEntity()
+
+	if targetName == name {
+		switch name {
+		case "minecraft:zombie":
+			if NewZombieBaby != nil {
+				tx.AddEntity(NewZombieBaby(world.EntitySpawnOpts{Position: e.Position()}))
+				ctx.SubtractFromCount(1)
+				return true
+			}
+		case "minecraft:chicken":
+			if NewChickenBaby != nil {
+				tx.AddEntity(NewChickenBaby(world.EntitySpawnOpts{Position: e.Position()}))
+				ctx.SubtractFromCount(1)
+				return true
+			}
 		}
 	}
 	return false

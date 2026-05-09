@@ -27,3 +27,20 @@ type ZombieDeath struct{ sound }
 
 // ZombieStep is a sound played when a zombie steps on a block.
 type ZombieStep struct{ sound }
+
+// --- CHICKEN ---
+
+// ChickenAmbient is a sound played randomly by a chicken.
+type ChickenAmbient struct{ sound }
+
+// ChickenHurt is a sound played when a chicken is hurt.
+type ChickenHurt struct{ sound }
+
+// ChickenDeath is a sound played when a chicken dies.
+type ChickenDeath struct{ sound }
+
+// ChickenStep is a sound played when a chicken walks.
+type ChickenStep struct{ sound }
+
+// ChickenEgg is a sound played when a chicken lays an egg.
+type ChickenEgg struct{ sound }

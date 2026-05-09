@@ -1731,12 +1731,24 @@ func (p *Player) UseItemOnEntity(e world.Entity) bool {
 		return false
 	}
 	i, left := p.HeldItems()
-	usable, ok := i.Item().(item.UsableOnEntity)
-	if !ok {
-		return true
-	}
 	useCtx := p.useContext()
-	if !usable.UseOnEntity(e, p.tx, p, useCtx) {
+
+	used := false
+	if usable, ok := i.Item().(item.UsableOnEntity); ok {
+		used = usable.UseOnEntity(e, p.tx, p, useCtx)
+	}
+
+	if !used {
+		if b, ok := e.(interface {
+			UseOnEntity(tx *world.Tx, user item.User, held item.Stack) bool
+		}); ok {
+			used = b.UseOnEntity(p.tx, p, i)
+			if used {
+				useCtx.CountSub = 1
+			}
+		}
+	}
+	if !used {
 		return true
 	}
 	p.SwingArm()
