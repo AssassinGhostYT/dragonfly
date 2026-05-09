@@ -79,7 +79,7 @@ func (e EntityBridge) SetPosition(pos [3]float64) {
 		}
 
 		// Vertical boost for jumping. Only if we actually need to go up, we are on ground and not already jumping.
-		if target.Y()-current.Y() > 0.5 && ent.mc.OnGround() && ent.data.Vel.Y() < 0.1 {
+		if target.Y()-current.Y() > 0.5 && e.OnGround() && ent.data.Vel.Y() < 0.1 {
 			ent.data.Vel = mgl64.Vec3{ent.data.Vel.X(), 0.42, ent.data.Vel.Z()}
 		}
 	}
@@ -119,8 +119,17 @@ func (e EntityBridge) HeldItem() (name string, meta int16) {
 
 func (e EntityBridge) Panicking() bool {
 	if ent, ok := e.E.(*Ent); ok {
-		if l, ok := ent.data.Data.(interface{ Panicking() bool }); ok {
+		if l, ok := ent.Behaviour().(interface{ Panicking() bool }); ok {
 			return l.Panicking()
+		}
+	}
+	return false
+}
+
+func (e EntityBridge) OnGround() bool {
+	if ent, ok := e.E.(*Ent); ok {
+		if l, ok := ent.Behaviour().(interface{ OnGround() bool }); ok {
+			return l.OnGround()
 		}
 	}
 	return false

@@ -296,8 +296,8 @@ func (chickenType) EncodeEntity() string { return "minecraft:chicken" }
 func (chickenType) BBox(e world.Entity) cube.BBox {
 	if ent, ok := e.(*Ent); ok {
 		if c, ok := ent.data.Data.(*Chicken); ok && c.baby {
-			// Smaller radius (0.1) and slightly higher offset to avoid getting stuck in blocks.
-			return cube.Box(-0.1, 0.05, -0.1, 0.1, 0.45, 0.1)
+			// Align with ground and slightly larger radius for stability
+			return cube.Box(-0.15, 0, -0.15, 0.15, 0.4, 0.15)
 		}
 	}
 	return cube.Box(-0.2, 0, -0.2, 0.2, 0.7, 0.2)
@@ -332,6 +332,7 @@ func (c *Chicken) Health() float64        { return c.health }
 func (c *Chicken) MaxHealth() float64     { return 4 }
 func (c *Chicken) SetMaxHealth(v float64) { c.health = v }
 func (c *Chicken) Dead() bool             { return c.health <= 0 }
+func (c *Chicken) OnGround() bool         { return c.mc.OnGround() }
 func (c *Chicken) Baby() bool             { return c.baby }
 func (c *Chicken) Panicking() bool        { return c.panicTicks > 0 }
 func (c *Chicken) Scale() float64 {

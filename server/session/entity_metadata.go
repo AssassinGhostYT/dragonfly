@@ -73,7 +73,8 @@ func (s *Session) addSpecificMetadata(e any, m protocol.EntityMetadata) {
 		}
 	}
 	if interactText != "" {
-		m[protocol.EntityDataKeyInteractText] = interactText
+		// Use ID 100 for InteractiveTag (button text)
+		m[100] = interactText
 	}
 
 	if b, ok := e.(breather); ok {

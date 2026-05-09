@@ -300,6 +300,7 @@ func (z *Zombie) MaxHealth() float64     { return 20 }
 func (z *Zombie) SetMaxHealth(v float64) { z.health = v }
 func (z *Zombie) Dead() bool             { return z.health <= 0 }
 func (z *Zombie) Baby() bool             { return z.baby }
+func (z *Zombie) OnGround() bool         { return z.mc.OnGround() }
 func (z *Zombie) Scale() float64 {
 	if z.baby {
 		return 0.5
