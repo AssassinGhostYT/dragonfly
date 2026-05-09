@@ -12,6 +12,7 @@ func init() {
 	item.NewSilverfish = NewSilverfish
 	item.NewZombie = NewZombie
 	item.NewZombieBaby = NewZombieBaby
+	item.NewSulfurCube = NewSulfurCube
 
 	// Grouped Spawn Eggs
 	eggs := []struct {
@@ -20,6 +21,7 @@ func init() {
 	}{
 		{SilverfishType, 39}, // Silverfish meta is 39
 		{ZombieType, 32},     // Zombie meta is 32
+		{SulfurCubeType, 43}, // Sulfur Cube meta placeholder
 	}
 
 	for _, eggData := range eggs {
@@ -52,6 +54,7 @@ var DefaultRegistry = conf.New([]world.EntityType{
 	TextType,
 	SilverfishType,
 	ZombieType,
+	SulfurCubeType,
 })
 
 var conf = world.EntityRegistryConfig{

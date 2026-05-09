@@ -182,6 +182,11 @@ func (s *Session) addSpecificMetadata(e any, m protocol.EntityMetadata) {
 	if mv, ok := e.(markVariable); ok {
 		m[protocol.EntityDataKeyMarkVariant] = mv.MarkVariant()
 	}
+	if tr, ok := e.(tileRuntimeID); ok {
+		if rid, ok := tr.DisplayTileRuntimeID(); ok {
+			m[protocol.EntityDataKeyDisplayTileRuntimeID] = int32(rid)
+		}
+	}
 }
 
 type sneaker interface {
@@ -303,4 +308,8 @@ type markVariable interface {
 
 type interactable interface {
 	InteractText() string
+}
+
+type tileRuntimeID interface {
+	DisplayTileRuntimeID() (uint32, bool)
 }
