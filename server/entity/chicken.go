@@ -14,7 +14,6 @@ import (
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/google/uuid"
 	"math/rand"
-	"time"
 )
 
 // Chicken is a passive mob that lays eggs and is immune to fall damage.
