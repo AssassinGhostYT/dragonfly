@@ -72,7 +72,7 @@ func (e EntityBridge) SetPosition(pos [3]float64) {
 
 		// For small movements, use velocity to make it smooth.
 		if diff.Len() < 1.0 {
-			ent.data.Vel = mgl64.Vec3{diff.X() * 0.8, ent.data.Vel.Y(), diff.Z() * 0.8}
+			ent.data.Vel = mgl64.Vec3{diff.X() * 1.5, ent.data.Vel.Y(), diff.Z() * 1.5}
 		} else {
 			// For large movements, teleport.
 			ent.data.Pos = target
@@ -114,14 +114,19 @@ func (e EntityBridge) HeldItem() (name string, meta int16) {
 		HeldItems() (item.Stack, item.Stack)
 	}); ok {
 		held, _ := p.HeldItems()
+		if held.Empty() || held.Item() == nil {
+			return "", 0
+		}
 		return held.Item().EncodeItem()
 	}
 	return "", 0
 }
 
 func (e EntityBridge) Panicking() bool {
-	if l, ok := e.E.(interface{ Panicking() bool }); ok {
-		return l.Panicking()
+	if ent, ok := e.E.(*Ent); ok {
+		if l, ok := ent.data.Data.(interface{ Panicking() bool }); ok {
+			return l.Panicking()
+		}
 	}
 	return false
 }

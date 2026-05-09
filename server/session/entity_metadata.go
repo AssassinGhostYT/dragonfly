@@ -182,6 +182,9 @@ func (s *Session) addSpecificMetadata(e any, m protocol.EntityMetadata) {
 	if mv, ok := e.(markVariable); ok {
 		m[protocol.EntityDataKeyMarkVariant] = mv.MarkVariant()
 	}
+	if i, ok := e.(interactable); ok {
+		m[protocol.EntityDataKeyInteractText] = i.InteractText()
+	}
 }
 
 type sneaker interface {
