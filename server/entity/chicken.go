@@ -66,16 +66,17 @@ func (c *Chicken) Tick(e *Ent, tx *world.Tx) *Movement {
 		c.navigator = mobsx.NewNavigator(EntityBridge{E: e, tx: tx}, wBridge)
 		c.navigator.Finder.Height = 1
 		c.navigator.Speed = 0.25
-
-		c.scanner = &sensor.PlayerSensor{Range: 16}
-		// Follow seeds (Wheat, Beetroot, Melon, Pumpkin)
-		c.brain.AddBehavior(behavior.NewFollow(c.scanner, c.navigator, func(name string, meta int16) bool {
-			return name == "minecraft:wheat" || name == "minecraft:beetroot_seeds" || name == "minecraft:melon_seeds" || name == "minecraft:pumpkin_seeds" || name == "minecraft:torchflower_seeds" || name == "minecraft:pitcher_pod"
-		}))
-		c.brain.AddSensor(c.scanner)
-		c.brain.AddBehavior(behavior.NewWander(c.navigator, 80))
-		
-		// Set variant based on biome if spawned naturally
+c.scanner = &sensor.PlayerSensor{Range: 16}
+// Follow seeds (Wheat, Beetroot, Melon, Pumpkin)
+c.brain.AddBehavior(behavior.NewTempt(c.scanner, c.navigator, func(name string, meta int16) bool {
+	return name == "minecraft:wheat" || name == "minecraft:beetroot_seeds" || name == "minecraft:melon_seeds" || name == "minecraft:pumpkin_seeds" || name == "minecraft:torchflower_seeds" || name == "minecraft:pitcher_pod"
+}))
+if c.baby {
+	c.brain.AddBehavior(behavior.NewFollowParent(c.navigator))
+}
+c.brain.AddSensor(c.scanner)
+c.brain.AddBehavior(behavior.NewWander(c.navigator, 10)) // Radius 10 blocks
+}
 		pos := cube.PosFromVec3(e.Position())
 		temp := tx.Temperature(pos)
 		if temp < 0.2 {
