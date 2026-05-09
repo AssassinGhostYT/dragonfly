@@ -78,8 +78,8 @@ func (e EntityBridge) SetPosition(pos [3]float64) {
 			ent.data.Pos = target
 		}
 
-		// Vertical boost for jumping.
-		if target.Y()-current.Y() > 0.1 {
+		// Vertical boost for jumping. Only if we actually need to go up and we are not already jumping high.
+		if target.Y()-current.Y() > 0.5 && ent.data.Vel.Y() < 0.1 {
 			ent.data.Vel = mgl64.Vec3{ent.data.Vel.X(), 0.42, ent.data.Vel.Z()}
 		}
 	}
