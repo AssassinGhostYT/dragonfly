@@ -23,9 +23,6 @@ var NewZombie func(opts world.EntitySpawnOpts) *world.EntityHandle
 // NewZombieBaby is a function that can be used to create a new baby zombie entity. It is set by the entity package.
 var NewZombieBaby func(opts world.EntitySpawnOpts) *world.EntityHandle
 
-// NewSulfurCube is a function that can be used to create a new sulfur cube entity. It is set by the entity package.
-var NewSulfurCube func(opts world.EntitySpawnOpts) *world.EntityHandle
-
 // UseOnBlock spawns the entity at the position of the block clicked.
 func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, tx *world.Tx, user User, ctx *UseContext) bool {
 	if s.Entity == nil {
@@ -46,12 +43,6 @@ func (s SpawnEgg) UseOnBlock(pos cube.Pos, face cube.Face, clickPos mgl64.Vec3, 
 	case "minecraft:zombie":
 		if NewZombie != nil {
 			tx.AddEntity(NewZombie(opts))
-		} else {
-			return false
-		}
-	case "minecraft:sulfur_cube":
-		if NewSulfurCube != nil {
-			tx.AddEntity(NewSulfurCube(opts))
 		} else {
 			return false
 		}
