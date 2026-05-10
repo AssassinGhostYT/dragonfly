@@ -4,6 +4,7 @@ import (
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
+	"github.com/go-gl/mathgl/mgl64"
 )
 
 // SculkSensor is a block that detects vibrations.
@@ -15,6 +16,17 @@ type SculkSensor struct {
 	Phase int
 	// Power is the redstone power level emitted by the sensor.
 	Power int
+}
+
+// UseOnBlock ...
+func (s SculkSensor) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *world.Tx, user item.User, ctx *item.UseContext) bool {
+	pos, face, ok := firstReplaceable(tx, pos, face, s)
+	if !ok {
+		return false
+	}
+
+	place(tx, pos, s, user, ctx)
+	return placed(ctx)
 }
 
 // Source ...

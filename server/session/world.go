@@ -402,6 +402,11 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 			Position:  vec64To32(pos),
 			EventData: int32(world.BlockRuntimeID(pa.Block)) | (int32(pa.Face) << 24),
 		})
+	case particle.SculkShriekerShriek:
+		s.writePacket(&packet.LevelEvent{
+			EventType: packet.LevelEventSculkShriekerShriek,
+			Position:  vec64To32(pos),
+		})
 	case particle.EndermanTeleport:
 		s.writePacket(&packet.LevelEvent{
 			EventType: packet.LevelEventParticlesTeleport,
@@ -858,6 +863,14 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, disableRelative bool)
 		return
 	case sound.DecoratedPotInsertFailed:
 		pk.SoundType = packet.SoundEventDecoratedPotInsertFail
+	case sound.SculkShriekerShriek:
+		s.writePacket(&packet.PlaySound{
+			SoundName: "block.sculk_shrieker.shriek",
+			Position:  vec64To32(pos),
+			Volume:    1,
+			Pitch:     1,
+		})
+		return
 	case sound.LightningExplode:
 		s.writePacket(&packet.PlaySound{
 			SoundName: "ambient.weather.lightning.impact",

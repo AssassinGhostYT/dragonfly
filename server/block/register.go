@@ -131,8 +131,9 @@ func init() {
 	world.RegisterBlock(ShortGrass{})
 	world.RegisterBlock(Fern{})
 	world.RegisterBlock(Sculk{})
-	world.RegisterBlock(SculkCatalyst{})
+	registerAll(allSculkCatalysts())
 	registerAll(allSculkSensors())
+	registerAll(allCalibratedSculkSensors())
 	registerAll(allSculkShriekers())
 	registerAll(allSculkVeins())
 
@@ -411,6 +412,7 @@ func init() {
 	world.RegisterItem(Sculk{})
 	world.RegisterItem(SculkCatalyst{})
 	world.RegisterItem(SculkSensor{})
+	world.RegisterItem(CalibratedSculkSensor{})
 	world.RegisterItem(SculkShrieker{})
 	world.RegisterItem(SculkVein{})
 	world.RegisterItem(WheatSeeds{})

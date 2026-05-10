@@ -28,6 +28,7 @@ const (
 	hashCactus
 	hashCake
 	hashCalcite
+	hashCalibratedSculkSensor
 	hashCampfire
 	hashCarpet
 	hashCarrot
@@ -103,7 +104,6 @@ const (
 	hashInfestedDeepslate
 	hashInfestedMossyStoneBricks
 	hashInfestedStone
-	hashInfestedStoneBricks
 	hashInvisibleBedrock
 	hashIron
 	hashIronBars
@@ -128,7 +128,7 @@ const (
 	hashMelon
 	hashMelonSeeds
 	hashMossCarpet
-	hashMovingBlock
+	hashMoving
 	hashMud
 	hashMudBricks
 	hashMuddyMangroveRoots
@@ -167,11 +167,17 @@ const (
 	hashRedstoneBlock
 	hashRedstoneDust
 	hashRedstoneTorch
+	hashRedstoneWire
 	hashReinforcedDeepslate
 	hashResin
 	hashResinBricks
 	hashSand
 	hashSandstone
+	hashSculk
+	hashSculkCatalyst
+	hashSculkSensor
+	hashSculkShrieker
+	hashSculkVein
 	hashSeaLantern
 	hashSeaPickle
 	hashShortGrass
@@ -192,7 +198,6 @@ const (
 	hashStainedGlassPane
 	hashStainedTerracotta
 	hashStairs
-	hashStickyPiston
 	hashStone
 	hashStoneBricks
 	hashStonecutter
@@ -315,6 +320,10 @@ func (c Cake) Hash() (uint64, uint64) {
 
 func (Calcite) Hash() (uint64, uint64) {
 	return hashCalcite, 0
+}
+
+func (c CalibratedSculkSensor) Hash() (uint64, uint64) {
+	return hashCalibratedSculkSensor, uint64(c.Phase) | uint64(c.Facing)<<8
 }
 
 func (c Campfire) Hash() (uint64, uint64) {
@@ -617,10 +626,6 @@ func (InfestedStone) Hash() (uint64, uint64) {
 	return hashInfestedStone, 0
 }
 
-func (InfestedStoneBricks) Hash() (uint64, uint64) {
-	return hashInfestedStoneBricks, 0
-}
-
 func (InvisibleBedrock) Hash() (uint64, uint64) {
 	return hashInvisibleBedrock, 0
 }
@@ -717,8 +722,8 @@ func (MossCarpet) Hash() (uint64, uint64) {
 	return hashMossCarpet, 0
 }
 
-func (MovingBlock) Hash() (uint64, uint64) {
-	return hashMovingBlock, 0
+func (Moving) Hash() (uint64, uint64) {
+	return hashMoving, 0
 }
 
 func (Mud) Hash() (uint64, uint64) {
@@ -790,11 +795,11 @@ func (p PinkPetals) Hash() (uint64, uint64) {
 }
 
 func (p Piston) Hash() (uint64, uint64) {
-	return hashPiston, uint64(p.Facing)
+	return hashPiston, uint64(p.Facing) | uint64(boolByte(p.Sticky))<<3
 }
 
-func (p PistonArmCollision) Hash() (uint64, uint64) {
-	return hashPistonArmCollision, uint64(p.Facing) | uint64(boolByte(p.Sticky))<<3
+func (c PistonArmCollision) Hash() (uint64, uint64) {
+	return hashPistonArmCollision, uint64(c.Facing) | uint64(boolByte(c.Sticky))<<3
 }
 
 func (p Planks) Hash() (uint64, uint64) {
@@ -873,6 +878,10 @@ func (t RedstoneTorch) Hash() (uint64, uint64) {
 	return hashRedstoneTorch, uint64(t.Facing) | uint64(boolByte(t.Lit))<<3
 }
 
+func (r RedstoneWire) Hash() (uint64, uint64) {
+	return hashRedstoneWire, uint64(r.Power)
+}
+
 func (ReinforcedDeepslate) Hash() (uint64, uint64) {
 	return hashReinforcedDeepslate, 0
 }
@@ -891,6 +900,26 @@ func (s Sand) Hash() (uint64, uint64) {
 
 func (s Sandstone) Hash() (uint64, uint64) {
 	return hashSandstone, uint64(s.Type.Uint8()) | uint64(boolByte(s.Red))<<2
+}
+
+func (Sculk) Hash() (uint64, uint64) {
+	return hashSculk, 0
+}
+
+func (c SculkCatalyst) Hash() (uint64, uint64) {
+	return hashSculkCatalyst, uint64(boolByte(c.Bloom))
+}
+
+func (s SculkSensor) Hash() (uint64, uint64) {
+	return hashSculkSensor, uint64(s.Phase)
+}
+
+func (s SculkShrieker) Hash() (uint64, uint64) {
+	return hashSculkShrieker, uint64(boolByte(s.CanSummon)) | uint64(boolByte(s.Shrieking))<<1
+}
+
+func (v SculkVein) Hash() (uint64, uint64) {
+	return hashSculkVein, uint64(boolByte(v.North)) | uint64(boolByte(v.South))<<1 | uint64(boolByte(v.West))<<2 | uint64(boolByte(v.East))<<3 | uint64(boolByte(v.Up))<<4 | uint64(boolByte(v.Down))<<5
 }
 
 func (SeaLantern) Hash() (uint64, uint64) {
@@ -971,10 +1000,6 @@ func (t StainedTerracotta) Hash() (uint64, uint64) {
 
 func (s Stairs) Hash() (uint64, uint64) {
 	return hashStairs, world.BlockHash(s.Block) | uint64(boolByte(s.UpsideDown))<<32 | uint64(s.Facing)<<33
-}
-
-func (p StickyPiston) Hash() (uint64, uint64) {
-	return hashStickyPiston, uint64(p.Facing)
 }
 
 func (s Stone) Hash() (uint64, uint64) {

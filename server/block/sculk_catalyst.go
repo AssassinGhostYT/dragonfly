@@ -1,12 +1,28 @@
 package block
 
 import (
+	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/item"
+	"github.com/df-mc/dragonfly/server/world"
+	"github.com/go-gl/mathgl/mgl64"
 )
 
 // SculkCatalyst is a block that spreads sculk when a mob dies near it.
 type SculkCatalyst struct {
 	solid
+	// Bloom specifies if the sculk catalyst is currently blooming.
+	Bloom bool
+}
+
+// UseOnBlock ...
+func (c SculkCatalyst) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *world.Tx, user item.User, ctx *item.UseContext) bool {
+	pos, face, ok := firstReplaceable(tx, pos, face, c)
+	if !ok {
+		return false
+	}
+
+	place(tx, pos, c, user, ctx)
+	return placed(ctx)
 }
 
 // LightEmissionLevel ...
@@ -30,6 +46,11 @@ func (SculkCatalyst) EncodeItem() (name string, meta int16) {
 }
 
 // EncodeBlock ...
-func (SculkCatalyst) EncodeBlock() (string, map[string]any) {
-	return "minecraft:sculk_catalyst", nil
+func (c SculkCatalyst) EncodeBlock() (string, map[string]any) {
+	return "minecraft:sculk_catalyst", map[string]any{"bloom": boolByte(c.Bloom)}
+}
+
+// allSculkCatalysts ...
+func allSculkCatalysts() (b []world.Block) {
+	return []world.Block{SculkCatalyst{Bloom: true}, SculkCatalyst{Bloom: false}}
 }
