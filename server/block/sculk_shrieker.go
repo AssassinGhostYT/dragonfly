@@ -129,7 +129,7 @@ func (s SculkShrieker) ScheduledTick(pos cube.Pos, tx *world.Tx, _ *rand.Rand) {
 
 // UseOnBlock ...
 func (s SculkShrieker) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *world.Tx, user item.User, ctx *item.UseContext) bool {
-	pos, face, ok := firstReplaceable(tx, pos, face, s)
+	pos, _, ok := firstReplaceable(tx, pos, face, s)
 	if !ok {
 		return false
 	}
