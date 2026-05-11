@@ -49,7 +49,6 @@ func (v SculkVein) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *wo
 	}
 	v = v.WithAttachment(face.Opposite(), true)
 
-	ctx.IgnoreEntityCollision()
 	place(tx, pos, v, user, ctx)
 	return placed(ctx)
 }
