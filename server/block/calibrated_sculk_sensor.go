@@ -15,17 +15,16 @@ type CalibratedSculkSensor struct {
 	// Phase is the current phase of the sculk sensor. 0 is inactive, 1 is active, 2 is cooldown.
 	Phase int
 	// Facing is the direction the sculk sensor is facing.
-	Facing cube.Direction
+	Facing cube.Face
 }
 
 // UseOnBlock ...
 func (c CalibratedSculkSensor) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *world.Tx, user item.User, ctx *item.UseContext) bool {
-	pos, face, ok := firstReplaceable(tx, pos, face, c)
+	pos, _, ok := firstReplaceable(tx, pos, face, c)
 	if !ok {
 		return false
 	}
-	c.Facing = user.Rotation().Direction()
-
+	c.Facing = user.Rotation().Direction().Face().Opposite()
 	place(tx, pos, c, user, ctx)
 	return placed(ctx)
 }
@@ -80,8 +79,8 @@ func (c CalibratedSculkSensor) EncodeBlock() (string, map[string]any) {
 // allCalibratedSculkSensors ...
 func allCalibratedSculkSensors() (b []world.Block) {
 	for _, p := range []int{0, 1, 2} {
-		for _, d := range cube.Directions() {
-			b = append(b, CalibratedSculkSensor{Phase: p, Facing: d})
+		for _, f := range cube.Faces() {
+			b = append(b, CalibratedSculkSensor{Phase: p, Facing: f})
 		}
 	}
 	return

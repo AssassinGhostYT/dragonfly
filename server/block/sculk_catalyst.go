@@ -16,11 +16,10 @@ type SculkCatalyst struct {
 
 // UseOnBlock ...
 func (c SculkCatalyst) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *world.Tx, user item.User, ctx *item.UseContext) bool {
-	pos, face, ok := firstReplaceable(tx, pos, face, c)
+	pos, _, ok := firstReplaceable(tx, pos, face, c)
 	if !ok {
 		return false
 	}
-
 	place(tx, pos, c, user, ctx)
 	return placed(ctx)
 }

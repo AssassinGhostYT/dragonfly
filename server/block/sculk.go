@@ -14,11 +14,10 @@ type Sculk struct {
 
 // UseOnBlock ...
 func (s Sculk) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *world.Tx, user item.User, ctx *item.UseContext) bool {
-	pos, face, ok := firstReplaceable(tx, pos, face, s)
+	pos, _, ok := firstReplaceable(tx, pos, face, s)
 	if !ok {
 		return false
 	}
-
 	place(tx, pos, s, user, ctx)
 	return placed(ctx)
 }

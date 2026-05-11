@@ -14,4 +14,3 @@ type WardenNearbyClosest struct{ sound }
 
 // WardenSlightlyAngry is a sound played when a warden roar or generation fails.
 type WardenSlightlyAngry struct{ sound }
-
