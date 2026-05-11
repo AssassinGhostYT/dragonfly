@@ -50,7 +50,7 @@ func (s SculkShrieker) activate(tx *world.Tx, pos cube.Pos, e world.Entity) {
 
 	uid := uuid.Nil
 	if h, ok := e.(interface{ H() *world.EntityHandle }); ok {
-		uid = h.H().ID()
+		uid = h.H().UUID()
 	}
 
 	mu.Lock()
@@ -119,7 +119,7 @@ func (s SculkShrieker) ScheduledTick(pos cube.Pos, tx *world.Tx, _ *rand.Rand) {
 				GameMode() world.GameMode
 			}); ok {
 				gm := l.GameMode()
-				if !gm.CreativeInventory() && !gm.Spectator() {
+				if !gm.CreativeInventory() && gm.Visible() && gm.HasCollision() {
 					l.AddEffect(effect.New(effect.Darkness, 1, 12*time.Second))
 				}
 			}
