@@ -404,7 +404,7 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 		})
 	case particle.SculkShriekerShriek:
 		s.writePacket(&packet.LevelEvent{
-			EventType: packet.LevelEventSculkShriekerShriek,
+			EventType: 3507, // Sculk Shrieker Shriek
 			Position:  vec64To32(pos),
 		})
 	case particle.EndermanTeleport:
