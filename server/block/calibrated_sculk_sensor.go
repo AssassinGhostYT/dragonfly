@@ -71,15 +71,15 @@ func (CalibratedSculkSensor) EncodeItem() (name string, meta int16) {
 // EncodeBlock ...
 func (c CalibratedSculkSensor) EncodeBlock() (string, map[string]any) {
 	return "minecraft:calibrated_sculk_sensor", map[string]any{
-		"sculk_sensor_phase": int32(c.Phase),
-		"direction":          int32(c.Facing),
+		"sculk_sensor_phase":           int32(c.Phase),
+		"minecraft:cardinal_direction": c.Facing.String(),
 	}
 }
 
 // allCalibratedSculkSensors ...
 func allCalibratedSculkSensors() (b []world.Block) {
 	for _, p := range []int{0, 1, 2} {
-		for _, f := range cube.Faces() {
+		for _, f := range []cube.Face{cube.FaceNorth, cube.FaceSouth, cube.FaceWest, cube.FaceEast} {
 			b = append(b, CalibratedSculkSensor{Phase: p, Facing: f})
 		}
 	}
