@@ -11,7 +11,6 @@ import (
 	"github.com/df-mc/dragonfly/server/world/sound"
 	"github.com/go-gl/mathgl/mgl64"
 	"github.com/google/uuid"
-	"math/rand"
 	"sync"
 	"time"
 )
@@ -53,10 +52,6 @@ func (s SculkShrieker) EntityStepOn(pos cube.Pos, tx *world.Tx, e world.Entity) 
 // activate attempts to activate the shrieker.
 func (s SculkShrieker) activate(tx *world.Tx, pos cube.Pos, e world.Entity) {
 	log.Printf("SculkShrieker activate at %v (Shrieking=%v, CanSummon=%v)", pos, s.Shrieking, s.CanSummon)
-	if s.Shrieking {
-		log.Printf("SculkShrieker activate: already shrieking, returning")
-		return
-	}
 
 	uid := uuid.Nil
 	if h, ok := e.(interface{ H() *world.EntityHandle }); ok {
@@ -64,6 +59,12 @@ func (s SculkShrieker) activate(tx *world.Tx, pos cube.Pos, e world.Entity) {
 	}
 
 	mu.Lock()
+	if lastTime, ok := cooldowns[uid]; ok && time.Since(lastTime) < 10*time.Second {
+		log.Printf("SculkShrieker activate: cooldown active for player %v, returning", uid)
+		mu.Unlock()
+		return
+	}
+	cooldowns[uid] = time.Now()
 	level := warningLevels[uid]
 	if s.CanSummon && level < 4 {
 		level++
@@ -104,33 +105,38 @@ func (s SculkShrieker) shriek(tx *world.Tx, pos cube.Pos, warningLevel int) {
 		}
 	}
 
-	// Schedule to stop shrieking and apply darkness after 90 ticks (4.5 seconds).
-	tx.ScheduleBlockUpdate(pos, s, 90*time.Second/20)
-}
+	// Stop shrieking and apply darkness after 90 ticks (4.5 seconds).
+	pos, w := pos, tx.World()
+	canSummon := s.CanSummon
+	time.AfterFunc(90*time.Second/20, func() {
+		w.Exec(func(tx *world.Tx) {
+			log.Printf("SculkShrieker reset shrieking at %v (from goroutine timer)", pos)
+			b := tx.Block(pos)
+			if shrieker, ok := b.(SculkShrieker); ok {
+				shrieker.Shrieking = false
+				tx.SetBlock(pos, shrieker, nil)
 
-// ScheduledTick ...
-func (s SculkShrieker) ScheduledTick(pos cube.Pos, tx *world.Tx, _ *rand.Rand) {
-	log.Printf("SculkShrieker ScheduledTick at %v (Shrieking was %v)", pos, s.Shrieking)
-	s.Shrieking = false
-	tx.SetBlock(pos, s, nil)
-
-	// Wiki: "Después de que terminen los chillidos, todos los jugadores en modo Supervivencia o Aventura dentro de 40 bloques reciben el efecto Oscuridad durante 12 segundos."
-	if s.CanSummon {
-		for e := range tx.EntitiesWithin(cube.Box(
-			float64(pos.X()-40), float64(pos.Y()-40), float64(pos.Z()-40),
-			float64(pos.X()+40), float64(pos.Y()+40), float64(pos.Z()+40),
-		)) {
-			if l, ok := e.(interface {
-				AddEffect(e effect.Effect)
-				GameMode() world.GameMode
-			}); ok {
-				gm := l.GameMode()
-				if !gm.CreativeInventory() && gm.Visible() && gm.HasCollision() {
-					l.AddEffect(effect.New(effect.Darkness, 1, 12*time.Second))
+				if canSummon {
+					for e := range tx.EntitiesWithin(cube.Box(
+						float64(pos.X()-40), float64(pos.Y()-40), float64(pos.Z()-40),
+						float64(pos.X()+40), float64(pos.Y()+40), float64(pos.Z()+40),
+					)) {
+						if l, ok := e.(interface {
+							AddEffect(e effect.Effect)
+							GameMode() world.GameMode
+						}); ok {
+							gm := l.GameMode()
+							if !gm.CreativeInventory() && gm.Visible() && gm.HasCollision() {
+								l.AddEffect(effect.New(effect.Darkness, 1, 12*time.Second))
+							}
+						}
+					}
 				}
+			} else {
+				log.Printf("SculkShrieker reset: block at %v is %T, not a SculkShrieker!", pos, b)
 			}
-		}
-	}
+		})
+	})
 }
 
 // UseOnBlock ...
