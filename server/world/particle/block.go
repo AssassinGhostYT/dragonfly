@@ -84,6 +84,9 @@ type Lava struct{ particle }
 // DustPlume is a particle that shows up when an item is successfully inserted into a decorated pot.
 type DustPlume struct{ particle }
 
+// SculkShriekerShriek is a particle shown when a sculk shrieker shrieks.
+type SculkShriekerShriek struct{ particle }
+
 // particle serves as a base for all particles in this package.
 type particle struct{}
 
