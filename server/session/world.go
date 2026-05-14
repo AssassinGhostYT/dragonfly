@@ -403,9 +403,10 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 			EventData: int32(world.BlockRuntimeID(pa.Block)) | (int32(pa.Face) << 24),
 		})
 	case particle.SculkShriekerShriek:
-		s.writePacket(&packet.LevelEvent{
-			EventType: packet.LevelEventParticleSculkShriek,
-			Position:  vec64To32(pos),
+		s.writePacket(&packet.SpawnParticleEffect{
+			Dimension:    0,
+			Position:     vec64To32(pos),
+			ParticleName: "minecraft:shriek_particle",
 		})
 	case particle.EndermanTeleport:
 		s.writePacket(&packet.LevelEvent{

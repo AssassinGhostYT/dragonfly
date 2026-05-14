@@ -60,13 +60,6 @@ func (s SculkShrieker) activate(tx *world.Tx, pos cube.Pos, e world.Entity) {
 	}
 
 	mu.Lock()
-	last := cooldowns[uid]
-	if time.Since(last) < 10*time.Second {
-		mu.Unlock()
-		return
-	}
-	cooldowns[uid] = time.Now()
-
 	level := warningLevels[uid]
 	if s.CanSummon && level < 4 {
 		level++
