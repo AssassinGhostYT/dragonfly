@@ -1,6 +1,7 @@
 package block
 
 import (
+	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
 )
@@ -385,7 +386,7 @@ func init() {
 	world.RegisterItem(Sculk{})
 	world.RegisterItem(SculkCatalyst{})
 	world.RegisterItem(SculkSensor{})
-	world.RegisterItem(CalibratedSculkSensor{})
+	world.RegisterItem(CalibratedSculkSensor{Phase: 0, Facing: cube.FaceNorth})
 	world.RegisterItem(SculkShrieker{})
 	world.RegisterItem(SculkVein{})
 	world.RegisterItem(WheatSeeds{})
