@@ -2,6 +2,7 @@ package block
 
 import (
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/block/model"
 	"github.com/df-mc/dragonfly/server/entity/effect"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
@@ -32,6 +33,11 @@ type SculkShrieker struct {
 	CanSummon bool
 	// Shrieking specifies if the sculk shrieker is currently shrieking.
 	Shrieking bool
+}
+
+// Model ...
+func (s SculkShrieker) Model() world.BlockModel {
+	return model.SculkShrieker{}
 }
 
 // EntityStepOn ...
