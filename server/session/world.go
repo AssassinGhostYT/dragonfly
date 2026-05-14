@@ -404,7 +404,7 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 		})
 	case particle.SculkShriekerShriek:
 		s.writePacket(&packet.LevelEvent{
-			EventType: 3507, // Sculk Shrieker Shriek
+			EventType: packet.LevelEventParticleSculkShriek,
 			Position:  vec64To32(pos),
 		})
 	case particle.EndermanTeleport:
@@ -864,43 +864,33 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, disableRelative bool)
 	case sound.DecoratedPotInsertFailed:
 		pk.SoundType = packet.SoundEventDecoratedPotInsertFail
 	case sound.SculkShriekerShriek:
-		s.writePacket(&packet.PlaySound{
-			SoundName: "block.sculk_shrieker.shriek",
+		s.writePacket(&packet.LevelSoundEvent{
+			SoundType: packet.SoundEventSculkShriekerShriek,
 			Position:  vec64To32(pos),
-			Volume:    1.7,
-			Pitch:     0.8,
 		})
 		return
 	case sound.WardenNearbyClose:
-		s.writePacket(&packet.PlaySound{
-			SoundName: "nearby_close.warden",
+		s.writePacket(&packet.LevelSoundEvent{
+			SoundType: packet.SoundEventWardenNearbyClose,
 			Position:  vec64To32(pos),
-			Volume:    5.0,
-			Pitch:     1.0,
 		})
 		return
 	case sound.WardenNearbyCloser:
-		s.writePacket(&packet.PlaySound{
-			SoundName: "nearby_closer.warden",
+		s.writePacket(&packet.LevelSoundEvent{
+			SoundType: packet.SoundEventWardenNearbyCloser,
 			Position:  vec64To32(pos),
-			Volume:    5.0,
-			Pitch:     1.0,
 		})
 		return
 	case sound.WardenNearbyClosest:
-		s.writePacket(&packet.PlaySound{
-			SoundName: "nearby_closest.warden",
+		s.writePacket(&packet.LevelSoundEvent{
+			SoundType: packet.SoundEventWardenNearbyClosest,
 			Position:  vec64To32(pos),
-			Volume:    5.0,
-			Pitch:     1.0,
 		})
 		return
 	case sound.WardenSlightlyAngry:
-		s.writePacket(&packet.PlaySound{
-			SoundName: "mob.warden.listening_angry",
+		s.writePacket(&packet.LevelSoundEvent{
+			SoundType: packet.SoundEventWardenSlightlyAngry,
 			Position:  vec64To32(pos),
-			Volume:    5.0,
-			Pitch:     1.0,
 		})
 		return
 	case sound.LightningExplode:

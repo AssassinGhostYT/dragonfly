@@ -26,7 +26,7 @@ func (SculkShrieker) BBox(cube.Pos, world.BlockSource) []cube.BBox {
 	}
 }
 
-// FaceSolid returns true for bottom and side faces.
+// FaceSolid returns true for all faces except up.
 func (SculkShrieker) FaceSolid(_ cube.Pos, face cube.Face, _ world.BlockSource) bool {
-	return face == cube.FaceDown || face == cube.FaceNorth || face == cube.FaceSouth || face == cube.FaceWest || face == cube.FaceEast
+	return face != cube.FaceUp
 }
