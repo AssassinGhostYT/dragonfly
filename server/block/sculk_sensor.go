@@ -28,11 +28,12 @@ type SculkSensor struct {
 func (s SculkSensor) ScheduledTick(pos cube.Pos, tx *world.Tx, _ *rand.Rand) {
 	if s.Phase == 0 {
 		s.scan(tx, pos)
-		tx.ScheduleBlockUpdate(pos, s, 250*time.Millisecond)
+		tx.ScheduleBlockUpdate(pos, s, time.Millisecond*250) // Scan every 5 ticks
 	}
 }
 
 func (s SculkSensor) scan(tx *world.Tx, pos cube.Pos) {
+	// Radius of 8 blocks
 	for e := range tx.EntitiesWithin(cube.Box(
 		float64(pos.X()-8), float64(pos.Y()-8), float64(pos.Z()-8),
 		float64(pos.X()+8), float64(pos.Y()+8), float64(pos.Z()+8),
@@ -40,8 +41,13 @@ func (s SculkSensor) scan(tx *world.Tx, pos cube.Pos) {
 		if sneak, ok := e.(interface{ Sneaking() bool }); ok && sneak.Sneaking() {
 			continue
 		}
-		s.detect(tx, pos, e.Position(), e)
-		break
+		
+		// If entity is in range, trigger detection
+		dist := pos.Vec3Centre().Sub(e.Position()).Len()
+		if dist <= 8 {
+			s.detect(tx, pos, e.Position(), e)
+			return
+		}
 	}
 }
 
@@ -66,7 +72,7 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 		return
 	}
 
-	log.Printf("DEBUG-SCULK: DETECTED at %v (dist=%.2f)", pos, dist)
+	log.Printf("DEBUG-SCULK: Sensor at %v DETECTED %T at dist %.2f", pos, e, dist)
 
 	s.Power = int(math.Max(1, 15-math.Floor(15.0/8.0*dist)))
 	s.Phase = 1
@@ -79,13 +85,13 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 		s.activateNearbyShriekers(tx, pos)
 	}
 
-	// Pattern copy from SculkShrieker: use time.AfterFunc for transitions
+	// Stay on for 1.5s then cooldown 0.5s (Total 2s cycle)
 	w := tx.World()
 	time.AfterFunc(1500*time.Millisecond, func() {
 		w.Exec(func(tx *world.Tx) {
 			b := tx.Block(pos)
-			if sensor, ok := b.(SculkSensor); ok {
-				log.Printf("DEBUG-SCULK: Active -> Cooldown at %v", pos)
+			if sensor, ok := b.(SculkSensor); ok && sensor.Phase == 1 {
+				log.Printf("DEBUG-SCULK: Sensor at %v: Active -> Cooldown", pos)
 				sensor.Phase = 2
 				sensor.Power = 0
 				tx.SetBlock(pos, sensor, nil)
@@ -94,12 +100,11 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 				time.AfterFunc(500*time.Millisecond, func() {
 					w.Exec(func(tx *world.Tx) {
 						b := tx.Block(pos)
-						if sensor, ok := b.(SculkSensor); ok {
-							log.Printf("DEBUG-SCULK: Cooldown -> Inactive at %v", pos)
+						if sensor, ok := b.(SculkSensor); ok && sensor.Phase == 2 {
+							log.Printf("DEBUG-SCULK: Sensor at %v: Cooldown -> Inactive", pos)
 							sensor.Phase = 0
 							tx.SetBlock(pos, sensor, nil)
-							// Restart scan loop
-							tx.ScheduleBlockUpdate(pos, sensor, 250*time.Millisecond)
+							// Tick will restart scan
 						}
 					})
 				})
@@ -130,7 +135,7 @@ func (s SculkSensor) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *
 	if !ok {
 		return false
 	}
-	log.Printf("DEBUG-SCULK: PLACED at %v", pos)
+	log.Printf("DEBUG-SCULK: Sensor PLACED at %v", pos)
 	place(tx, pos, s, user, ctx)
 	tx.ScheduleBlockUpdate(pos, s, 100*time.Millisecond)
 	return placed(ctx)
