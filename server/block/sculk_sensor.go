@@ -90,7 +90,8 @@ func (s SculkSensor) runScan(tx *world.Tx, pos cube.Pos) bool {
 		dist := centre.Sub(origin).Len()
 		
 		// Wiki: detect if within 8 blocks and vibrating (moving)
-		if dist <= 8 && (vel.Len() > 0.01 || dist < 1.1) {
+		// Only trigger if entity has movement or is stepping exactly on it
+		if dist <= 8 && (vel.Len() > 0.05 || dist < 1.1) {
 			s.detect(tx, pos, origin, e)
 			return true
 		}

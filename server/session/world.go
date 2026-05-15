@@ -412,20 +412,14 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 		})
 	case particle.VibrationSignal:
 		log.Printf("[ViewParticle] VibrationSignal sensorPos=%v origin=%v", pos, pa.Origin)
-		// Official Bedrock NBT structure for vibration signals.
-		data, err := nbt.Marshal(map[string]any{
-			"origin": map[string]any{
-				"x": float32(pa.Origin.X()),
-				"y": float32(pa.Origin.Y()),
-				"z": float32(pa.Origin.Z()),
-			},
+		// Vibration Signal (ID 2027): Position is the destination. 
+		// EventData is the origin block position encoded as (x & 0xFFF) | ((y & 0xFFF) << 12) | ((z & 0xFFF) << 24).
+		ox, oy, oz := int32(pa.Origin.X()), int32(pa.Origin.Y()), int32(pa.Origin.Z())
+		s.writePacket(&packet.LevelEvent{
+			EventType: packet.LevelEventParticlesVibrationSignal,
+			Position:  vec64To32(pos),
+			EventData: (ox & 0xFFF) | ((oy & 0xFFF) << 12) | ((oz & 0xFFF) << 24),
 		})
-		if err == nil {
-			s.writePacket(&packet.LevelEventGeneric{
-				EventID:             packet.LevelEventParticlesVibrationSignal,
-				SerialisedEventData: data,
-			})
-		}
 	case particle.EndermanTeleport:
 		s.writePacket(&packet.LevelEvent{
 			EventType: packet.LevelEventParticlesTeleport,
