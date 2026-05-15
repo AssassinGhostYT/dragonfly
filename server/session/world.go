@@ -411,11 +411,12 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 			ParticleName:   "minecraft:shriek_particle",
 		})
 	case particle.VibrationSignal:
-		log.Printf("DEBUG-SESSION: sending vibration_signal to client. Dest=%v", pos)
+		// We use the Origin of the vibration for the packet position.
+		log.Printf("DEBUG-SESSION: sending vibration_signal to client. Origin=%v", pa.Origin)
 		s.writePacket(&packet.SpawnParticleEffect{
 			Dimension:      0,
 			EntityUniqueID: 0,
-			Position:       vec64To32(pos),
+			Position:       vec64To32(pa.Origin),
 			ParticleName:   "minecraft:vibration_signal",
 		})
 	case particle.EndermanTeleport:
