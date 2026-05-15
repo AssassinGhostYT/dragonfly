@@ -8,8 +8,16 @@ import (
 	"github.com/df-mc/dragonfly/server/world/particle"
 	"github.com/df-mc/dragonfly/server/world/sound"
 	"github.com/go-gl/mathgl/mgl64"
+	"github.com/google/uuid"
+	"log"
 	"math"
+	"sync"
 	"time"
+)
+
+var (
+	entityCooldowns = make(map[uuid.UUID]time.Time)
+	cooldownMu      sync.Mutex
 )
 
 // SculkSensor is a block that detects vibrations.
@@ -56,8 +64,6 @@ func (s SculkSensor) startScanLoop(w *world.World, pos cube.Pos) {
 				if !detected {
 					sensor.startScanLoop(w, pos)
 				}
-			} else {
-				sensor.startScanLoop(w, pos)
 			}
 		})
 	})
@@ -110,6 +116,35 @@ func (s SculkSensor) EntityStepOn(pos cube.Pos, tx *world.Tx, e world.Entity) {
 	s.detect(tx, pos, e.Position(), e)
 }
 
+// entityUUID attempts to extract a UUID from an entity.
+func entityUUID(e world.Entity) uuid.UUID {
+	if h, ok := e.(interface{ H() *world.EntityHandle }); ok {
+		return h.H().UUID()
+	}
+	return uuid.Nil
+}
+
+// onCooldown checks if the entity is on cooldown from being detected.
+func onCooldown(id uuid.UUID) bool {
+	if id == uuid.Nil {
+		return false
+	}
+	cooldownMu.Lock()
+	defer cooldownMu.Unlock()
+	t, ok := entityCooldowns[id]
+	return ok && time.Since(t) < 5*time.Second
+}
+
+// setCooldown sets the cooldown for an entity.
+func setCooldown(id uuid.UUID) {
+	if id == uuid.Nil {
+		return
+	}
+	cooldownMu.Lock()
+	defer cooldownMu.Unlock()
+	entityCooldowns[id] = time.Now()
+}
+
 // detect attempts to detect a vibration.
 func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e world.Entity) {
 	if s.Phase != 0 {
@@ -121,14 +156,25 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 		return
 	}
 
+	id := entityUUID(e)
+	if onCooldown(id) {
+		log.Printf("[SculkSensor] %v already on cooldown, skipping detect", id)
+		return
+	}
+	setCooldown(id)
+
 	s.Power = int(math.Max(1, 15-math.Floor(15.0/8.0*dist)))
 	s.Phase = 1
 	tx.SetBlock(pos, s, nil)
 
+	log.Printf("[SculkSensor] Detected entity %v at distance %.2f, power=%d, origin=%v", id, dist, s.Power, origin)
+
 	tx.PlaySound(pos.Vec3Centre(), sound.SculkSensorPowerOn{})
 	tx.AddParticle(pos.Vec3Centre(), particle.VibrationSignal{Origin: origin})
+	log.Printf("[SculkSensor] Sent particle VibrationSignal from %v", pos.Vec3Centre())
 
 	if _, ok := e.(interface{ GameMode() world.GameMode }); ok {
+		log.Printf("[SculkSensor] Entity is a player, activating nearby shriekers")
 		s.activateNearbyShriekers(tx, pos)
 	}
 
@@ -137,6 +183,7 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 		w.Exec(func(tx *world.Tx) {
 			b := tx.Block(pos)
 			if sensor, ok := b.(SculkSensor); ok && sensor.Phase == 1 {
+				log.Printf("[SculkSensor] Phase 1→2 at %v", pos)
 				sensor.Phase = 2
 				sensor.Power = 0
 				tx.SetBlock(pos, sensor, nil)
@@ -146,6 +193,7 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 					w.Exec(func(tx *world.Tx) {
 						b := tx.Block(pos)
 						if sensor, ok := b.(SculkSensor); ok && sensor.Phase == 2 {
+							log.Printf("[SculkSensor] Phase 2→0 at %v, restarting scan", pos)
 							sensor.Phase = 0
 							tx.SetBlock(pos, sensor, nil)
 							sensor.startScanLoop(w, pos)
@@ -164,9 +212,8 @@ func (s SculkSensor) activateNearbyShriekers(tx *world.Tx, pos cube.Pos) {
 			for z := -8; z <= 8; z++ {
 				p := pos.Add(cube.Pos{x, y, z})
 				if shrieker, ok := tx.Block(p).(SculkShrieker); ok {
-					if shrieker.CanSummon {
-						shrieker.shriek(tx, p, 0)
-					}
+					log.Printf("[SculkSensor] Activating shrieker at %v (CanSummon=%v)", p, shrieker.CanSummon)
+					shrieker.shriek(tx, p, 0)
 				}
 			}
 		}

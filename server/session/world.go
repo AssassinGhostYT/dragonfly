@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image/color"
+	"log"
 	"math/rand/v2"
 	"strings"
 	"time"
@@ -410,9 +411,12 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 			ParticleName:   "minecraft:shriek_particle",
 		})
 	case particle.VibrationSignal:
-		s.writePacket(&packet.LevelEvent{
-			EventType: packet.LevelEventParticlesVibrationSignal,
-			Position:  vec64To32(pa.Origin),
+		log.Printf("[ViewParticle] VibrationSignal origin=%v", pos)
+		s.writePacket(&packet.SpawnParticleEffect{
+			Dimension:      0,
+			EntityUniqueID: -1,
+			Position:       vec64To32(pa.Origin),
+			ParticleName:   "minecraft:vibration_signal",
 		})
 	case particle.EndermanTeleport:
 		s.writePacket(&packet.LevelEvent{
