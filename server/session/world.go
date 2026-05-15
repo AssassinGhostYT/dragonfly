@@ -411,12 +411,10 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 			ParticleName:   "minecraft:shriek_particle",
 		})
 	case particle.VibrationSignal:
-		log.Printf("[ViewParticle] VibrationSignal origin=%v", pos)
-		s.writePacket(&packet.SpawnParticleEffect{
-			Dimension:      0,
-			EntityUniqueID: -1,
-			Position:       vec64To32(pa.Origin),
-			ParticleName:   "minecraft:vibration_signal",
+		log.Printf("[ViewParticle] VibrationSignal sensorPos=%v origin=%v", pos, pa.Origin)
+		s.writePacket(&packet.LevelEvent{
+			EventType: packet.LevelEventParticleLegacyEvent | 77,
+			Position:  vec64To32(pa.Origin),
 		})
 	case particle.EndermanTeleport:
 		s.writePacket(&packet.LevelEvent{

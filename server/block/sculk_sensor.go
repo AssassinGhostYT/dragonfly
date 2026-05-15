@@ -17,6 +17,7 @@ import (
 
 var (
 	entityCooldowns = make(map[uuid.UUID]time.Time)
+	entityPositions = make(map[uuid.UUID]mgl64.Vec3)
 	cooldownMu      sync.Mutex
 )
 
@@ -124,25 +125,33 @@ func entityUUID(e world.Entity) uuid.UUID {
 	return uuid.Nil
 }
 
-// onCooldown checks if the entity is on cooldown from being detected.
-func onCooldown(id uuid.UUID) bool {
+// onCooldown checks if the entity was recently detected at the same position.
+func onCooldown(id uuid.UUID, pos mgl64.Vec3) bool {
 	if id == uuid.Nil {
 		return false
 	}
 	cooldownMu.Lock()
 	defer cooldownMu.Unlock()
-	t, ok := entityCooldowns[id]
-	return ok && time.Since(t) < 5*time.Second
+	lastPos, hasPos := entityPositions[id]
+	t, hasTime := entityCooldowns[id]
+	if !hasTime || !hasPos {
+		return false
+	}
+	if time.Since(t) < 5*time.Second && lastPos.Sub(pos).Len() < 0.5 {
+		return true
+	}
+	return false
 }
 
-// setCooldown sets the cooldown for an entity.
-func setCooldown(id uuid.UUID) {
+// setCooldown records the detection time and position for an entity.
+func setCooldown(id uuid.UUID, pos mgl64.Vec3) {
 	if id == uuid.Nil {
 		return
 	}
 	cooldownMu.Lock()
 	defer cooldownMu.Unlock()
 	entityCooldowns[id] = time.Now()
+	entityPositions[id] = pos
 }
 
 // detect attempts to detect a vibration.
@@ -157,11 +166,11 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 	}
 
 	id := entityUUID(e)
-	if onCooldown(id) {
-		log.Printf("[SculkSensor] %v already on cooldown, skipping detect", id)
+	if onCooldown(id, origin) {
+		log.Printf("[SculkSensor] %v on cooldown or same position, skipping detect", id)
 		return
 	}
-	setCooldown(id)
+	setCooldown(id, origin)
 
 	s.Power = int(math.Max(1, 15-math.Floor(15.0/8.0*dist)))
 	s.Phase = 1
