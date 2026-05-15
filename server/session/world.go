@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image/color"
+	"log"
 	"math/rand/v2"
 	"strings"
 	"time"
@@ -410,7 +411,11 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 			ParticleName:   "minecraft:shriek_particle",
 		})
 	case particle.VibrationSignal:
-		// Official Bedrock NBT structure for vibration signals.
+		log.Printf("[ViewParticle] VibrationSignal sensorPos=%v origin=%v", pos, pa.Origin)
+		s.writePacket(&packet.LevelEvent{
+			EventType: packet.LevelEventParticlesVibrationSignal,
+			Position:  vec64To32(pos),
+		})
 		data, err := nbt.Marshal(map[string]any{
 			"origin": map[string]any{
 				"x": float32(pa.Origin.X()),
