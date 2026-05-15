@@ -421,8 +421,7 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 			"originY": float32(pa.Origin.Y()),
 			"originZ": float32(pa.Origin.Z()),
 		})
-		if err == nil && len(data) > 4 {
-			data = data[3 : len(data)-1]
+		if err == nil {
 			s.writePacket(&packet.LevelEventGeneric{
 				EventID:              packet.LevelEventParticlesVibrationSignal,
 				SerialisedEventData:  data,
