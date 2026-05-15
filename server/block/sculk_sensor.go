@@ -4,7 +4,10 @@ import (
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
+	"github.com/df-mc/dragonfly/server/world/particle"
 	"github.com/go-gl/mathgl/mgl64"
+	"math/rand"
+	"time"
 )
 
 // SculkSensor is a block that detects vibrations.
@@ -16,6 +19,78 @@ type SculkSensor struct {
 	Phase int
 	// Power is the redstone power level emitted by the sensor.
 	Power int
+}
+
+// ScheduledTick ...
+func (s SculkSensor) ScheduledTick(pos cube.Pos, tx *world.Tx, _ *rand.Rand) {
+	if s.Phase == 1 {
+		// Active -> Cooldown (40 ticks later)
+		s.Phase = 2
+		s.Power = 0
+		tx.SetBlock(pos, s, nil)
+		tx.ScheduleBlockUpdate(pos, s, time.Millisecond*50) // 1 tick cooldown
+	} else if s.Phase == 2 {
+		// Cooldown -> Inactive (1 tick later)
+		s.Phase = 0
+		tx.SetBlock(pos, s, nil)
+	}
+}
+
+// EntityStepOn ...
+func (s SculkSensor) EntityStepOn(pos cube.Pos, tx *world.Tx, e world.Entity) {
+	s.detect(tx, pos, e.Position(), e)
+}
+
+// detect attempts to detect a vibration.
+func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e world.Entity) {
+	if s.Phase != 0 {
+		return
+	}
+
+	// Wiki: "Agacharse impide la creación de vibraciones al moverse"
+	if sneak, ok := e.(interface{ Sneaking() bool }); ok && sneak.Sneaking() {
+		return
+	}
+
+	// Calculate redstone power (inversely proportional to distance)
+	dist := pos.Vec3Centre().Sub(origin).Len()
+	if dist > 8 {
+		return
+	}
+
+	// TODO: Wool occlusion (RayTrace)
+
+	s.Phase = 1
+	s.Power = int(max(1, 15-(dist*15/8)))
+	tx.SetBlock(pos, s, nil)
+
+	// Emit vibration signal particle from origin to sensor
+	tx.AddParticle(pos.Vec3Centre(), particle.VibrationSignal{Origin: origin})
+
+	// Wiki: "Las vibraciones causadas por el jugador también pueden activar a los chilladores sculk cercanos."
+	if _, ok := e.(interface{ GameMode() world.GameMode }); ok {
+		s.activateNearbyShriekers(tx, pos)
+	}
+
+	// Schedule transition to cooldown after 40 ticks (2 seconds)
+	tx.ScheduleBlockUpdate(pos, s, 2*time.Second)
+}
+
+// activateNearbyShriekers searches for and activates shriekers within 8 blocks.
+func (s SculkSensor) activateNearbyShriekers(tx *world.Tx, pos cube.Pos) {
+	for x := -8; x <= 8; x++ {
+		for y := -8; y <= 8; y++ {
+			for z := -8; z <= 8; z++ {
+				p := pos.Add(cube.Pos{x, y, z})
+				if shrieker, ok := tx.Block(p).(SculkShrieker); ok {
+					// Only naturally generated shriekers or those that can summon
+					if shrieker.CanSummon {
+						shrieker.shriek(tx, p, 0) // TODO: Get actual player warning level
+					}
+				}
+			}
+		}
+	}
 }
 
 // UseOnBlock ...

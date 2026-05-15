@@ -87,6 +87,13 @@ type DustPlume struct{ particle }
 // SculkShriekerShriek is a particle shown when a sculk shrieker shrieks.
 type SculkShriekerShriek struct{ particle }
 
+// VibrationSignal is a particle shown when a sculk sensor detects a vibration.
+type VibrationSignal struct {
+	particle
+	// Origin is the position where the vibration started.
+	Origin mgl64.Vec3
+}
+
 // particle serves as a base for all particles in this package.
 type particle struct{}
 

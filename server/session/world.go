@@ -404,10 +404,17 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 		})
 	case particle.SculkShriekerShriek:
 		s.writePacket(&packet.SpawnParticleEffect{
-			Dimension:       0,
-			EntityUniqueID:  -1,
-			Position:        vec64To32(pos),
-			ParticleName:    "minecraft:shriek_particle",
+			Dimension:      0,
+			EntityUniqueID: -1,
+			Position:       vec64To32(pos),
+			ParticleName:   "minecraft:shriek_particle",
+		})
+	case particle.VibrationSignal:
+		s.writePacket(&packet.SpawnParticleEffect{
+			Dimension:      0,
+			EntityUniqueID: -1,
+			Position:       vec64To32(pos),
+			ParticleName:   "minecraft:vibration_signal",
 		})
 	case particle.EndermanTeleport:
 		s.writePacket(&packet.LevelEvent{
