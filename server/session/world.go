@@ -416,6 +416,18 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 			EventType: packet.LevelEventParticlesVibrationSignal,
 			Position:  vec64To32(pos),
 		})
+		data, err := nbt.Marshal(map[string]any{
+			"originX": float32(pa.Origin.X()),
+			"originY": float32(pa.Origin.Y()),
+			"originZ": float32(pa.Origin.Z()),
+		})
+		if err == nil && len(data) > 4 {
+			data = data[3 : len(data)-1]
+			s.writePacket(&packet.LevelEventGeneric{
+				EventID:              packet.LevelEventParticlesVibrationSignal,
+				SerialisedEventData:  data,
+			})
+		}
 	case particle.EndermanTeleport:
 		s.writePacket(&packet.LevelEvent{
 			EventType: packet.LevelEventParticlesTeleport,
