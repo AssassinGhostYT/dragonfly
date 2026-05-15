@@ -42,7 +42,6 @@ func (s SculkShrieker) Model() world.BlockModel {
 
 // EntityStepOn ...
 func (s SculkShrieker) EntityStepOn(pos cube.Pos, tx *world.Tx, e world.Entity) {
-	log.Printf("SculkShrieker EntityStepOn at %v (Shrieking=%v)", pos, s.Shrieking)
 	// Wiki: "Un chillidor de sculk se activa cuando cualquier jugador se para sobre la parte negra en el centro del bloque"
 	if _, ok := e.(interface{ GameMode() world.GameMode }); ok {
 		s.activate(tx, pos, e)
@@ -51,8 +50,6 @@ func (s SculkShrieker) EntityStepOn(pos cube.Pos, tx *world.Tx, e world.Entity) 
 
 // activate attempts to activate the shrieker.
 func (s SculkShrieker) activate(tx *world.Tx, pos cube.Pos, e world.Entity) {
-	log.Printf("SculkShrieker activate at %v (Shrieking=%v, CanSummon=%v)", pos, s.Shrieking, s.CanSummon)
-
 	uid := uuid.Nil
 	if h, ok := e.(interface{ H() *world.EntityHandle }); ok {
 		uid = h.H().UUID()
@@ -60,7 +57,6 @@ func (s SculkShrieker) activate(tx *world.Tx, pos cube.Pos, e world.Entity) {
 
 	mu.Lock()
 	if lastTime, ok := cooldowns[uid]; ok && time.Since(lastTime) < 10*time.Second {
-		log.Printf("SculkShrieker activate: cooldown active for player %v, returning", uid)
 		mu.Unlock()
 		return
 	}
@@ -77,7 +73,6 @@ func (s SculkShrieker) activate(tx *world.Tx, pos cube.Pos, e world.Entity) {
 
 // shriek triggers the shrieking behavior of the block.
 func (s SculkShrieker) shriek(tx *world.Tx, pos cube.Pos, warningLevel int) {
-	log.Printf("SculkShrieker shriek at %v (Shrieking=%v, CanSummon=%v, warningLevel=%d)", pos, s.Shrieking, s.CanSummon, warningLevel)
 	s.Shrieking = true
 	tx.SetBlock(pos, s, nil)
 
@@ -87,7 +82,6 @@ func (s SculkShrieker) shriek(tx *world.Tx, pos cube.Pos, warningLevel int) {
 	if !water {
 		tx.PlaySound(pos.Vec3Centre(), sound.SculkShriekerShriek{})
 	}
-	log.Printf("SculkShrieker shriek: adding particle at %v", pos.Vec3Centre())
 	tx.AddParticle(pos.Vec3Centre(), particle.SculkShriekerShriek{})
 
 	if s.CanSummon {
@@ -110,7 +104,6 @@ func (s SculkShrieker) shriek(tx *world.Tx, pos cube.Pos, warningLevel int) {
 	canSummon := s.CanSummon
 	time.AfterFunc(90*time.Second/20, func() {
 		w.Exec(func(tx *world.Tx) {
-			log.Printf("SculkShrieker reset shrieking at %v (from goroutine timer)", pos)
 			b := tx.Block(pos)
 			if shrieker, ok := b.(SculkShrieker); ok {
 				shrieker.Shrieking = false
@@ -132,8 +125,6 @@ func (s SculkShrieker) shriek(tx *world.Tx, pos cube.Pos, warningLevel int) {
 						}
 					}
 				}
-			} else {
-				log.Printf("SculkShrieker reset: block at %v is %T, not a SculkShrieker!", pos, b)
 			}
 		})
 	})

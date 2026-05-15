@@ -72,8 +72,6 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 		return
 	}
 
-	log.Printf("DEBUG-SCULK: Sensor at %v DETECTED %T at dist %.2f", pos, e, dist)
-
 	s.Power = int(math.Max(1, 15-math.Floor(15.0/8.0*dist)))
 	s.Phase = 1
 	tx.SetBlock(pos, s, nil)
@@ -91,7 +89,6 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 		w.Exec(func(tx *world.Tx) {
 			b := tx.Block(pos)
 			if sensor, ok := b.(SculkSensor); ok && sensor.Phase == 1 {
-				log.Printf("DEBUG-SCULK: Sensor at %v: Active -> Cooldown", pos)
 				sensor.Phase = 2
 				sensor.Power = 0
 				tx.SetBlock(pos, sensor, nil)
@@ -101,7 +98,6 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 					w.Exec(func(tx *world.Tx) {
 						b := tx.Block(pos)
 						if sensor, ok := b.(SculkSensor); ok && sensor.Phase == 2 {
-							log.Printf("DEBUG-SCULK: Sensor at %v: Cooldown -> Inactive", pos)
 							sensor.Phase = 0
 							tx.SetBlock(pos, sensor, nil)
 							// Tick will restart scan
@@ -135,7 +131,6 @@ func (s SculkSensor) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *
 	if !ok {
 		return false
 	}
-	log.Printf("DEBUG-SCULK: Sensor PLACED at %v", pos)
 	place(tx, pos, s, user, ctx)
 	tx.ScheduleBlockUpdate(pos, s, 100*time.Millisecond)
 	return placed(ctx)
