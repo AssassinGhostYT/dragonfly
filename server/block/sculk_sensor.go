@@ -137,10 +137,12 @@ func onCooldown(id uuid.UUID, pos mgl64.Vec3) bool {
 	if !hasTime || !hasPos {
 		return false
 	}
-	if time.Since(t) < 5*time.Second && lastPos.Sub(pos).Len() < 0.5 {
-		return true
+	// If entity moved more than 0.5 blocks, always allow detection
+	if lastPos.Sub(pos).Len() >= 0.5 {
+		return false
 	}
-	return false
+	// Same position, only allow if cooldown expired
+	return time.Since(t) < 5*time.Second
 }
 
 // setCooldown records the detection time and position for an entity.
