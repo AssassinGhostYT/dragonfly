@@ -414,7 +414,7 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 			Dimension:      0,
 			EntityUniqueID: -1,
 			Position:       vec64To32(pos),
-			ParticleName:   "minecraft:vibration_signal",
+			ParticleName:   "minecraft:shriek_particle",
 		})
 	case particle.EndermanTeleport:
 		s.writePacket(&packet.LevelEvent{
@@ -899,6 +899,18 @@ func (s *Session) playSound(pos mgl64.Vec3, t world.Sound, disableRelative bool)
 	case sound.WardenSlightlyAngry:
 		s.writePacket(&packet.LevelSoundEvent{
 			SoundType: packet.SoundEventWardenSlightlyAngry,
+			Position:  vec64To32(pos),
+		})
+		return
+	case sound.SculkSensorPowerOn:
+		s.writePacket(&packet.LevelSoundEvent{
+			SoundType: packet.SoundEventSculkSensorPowerOn,
+			Position:  vec64To32(pos),
+		})
+		return
+	case sound.SculkSensorPowerOff:
+		s.writePacket(&packet.LevelSoundEvent{
+			SoundType: packet.SoundEventSculkSensorPowerOff,
 			Position:  vec64To32(pos),
 		})
 		return
