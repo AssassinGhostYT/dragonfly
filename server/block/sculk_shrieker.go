@@ -1,7 +1,6 @@
 package block
 
 import (
-	"log"
 	"github.com/df-mc/dragonfly/server/block/cube"
 	"github.com/df-mc/dragonfly/server/block/model"
 	"github.com/df-mc/dragonfly/server/entity/effect"
