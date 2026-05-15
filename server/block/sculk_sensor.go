@@ -26,26 +26,12 @@ type SculkSensor struct {
 
 // ScheduledTick ...
 func (s SculkSensor) ScheduledTick(pos cube.Pos, tx *world.Tx, _ *rand.Rand) {
-	log.Printf("DEBUG-SCULK: Tick at %v (Phase=%d)", pos, s.Phase)
-	switch s.Phase {
-	case 1: // Active -> Transition to Cooldown (30 ticks = 1.5s)
-		s.Phase = 2
-		s.Power = 0
-		tx.SetBlock(pos, s, nil)
-		tx.PlaySound(pos.Vec3Centre(), sound.SculkSensorPowerOff{})
-		tx.ScheduleBlockUpdate(pos, s, 500*time.Millisecond) // 10 ticks = 0.5s
-	case 2: // Cooldown -> Transition to Inactive
-		s.Phase = 0
-		tx.SetBlock(pos, s, nil)
-		// No tick scheduled here, it will be started by an entity action
-	case 0:
-		// Periodic scan just in case
+	if s.Phase == 0 {
 		s.scan(tx, pos)
 		tx.ScheduleBlockUpdate(pos, s, 250*time.Millisecond)
 	}
 }
 
-// scan returns true if a vibration was detected.
 func (s SculkSensor) scan(tx *world.Tx, pos cube.Pos) {
 	for e := range tx.EntitiesWithin(cube.Box(
 		float64(pos.X()-8), float64(pos.Y()-8), float64(pos.Z()-8),
@@ -66,7 +52,6 @@ func (s SculkSensor) EntityInside(pos cube.Pos, tx *world.Tx, e world.Entity) {
 
 // EntityStepOn ...
 func (s SculkSensor) EntityStepOn(pos cube.Pos, tx *world.Tx, e world.Entity) {
-	log.Printf("DEBUG-SCULK: EntityStepOn at %v", pos)
 	s.detect(tx, pos, e.Position(), e)
 }
 
@@ -81,7 +66,7 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 		return
 	}
 
-	log.Printf("DEBUG-SCULK: DETECTED vibration at %v from %T", pos, e)
+	log.Printf("DEBUG-SCULK: DETECTED at %v (dist=%.2f)", pos, dist)
 
 	s.Power = int(math.Max(1, 15-math.Floor(15.0/8.0*dist)))
 	s.Phase = 1
@@ -94,8 +79,33 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 		s.activateNearbyShriekers(tx, pos)
 	}
 
-	// 30 ticks = 1.5 seconds
-	tx.ScheduleBlockUpdate(pos, s, 1500*time.Millisecond)
+	// Pattern copy from SculkShrieker: use time.AfterFunc for transitions
+	w := tx.World()
+	time.AfterFunc(1500*time.Millisecond, func() {
+		w.Exec(func(tx *world.Tx) {
+			b := tx.Block(pos)
+			if sensor, ok := b.(SculkSensor); ok {
+				log.Printf("DEBUG-SCULK: Active -> Cooldown at %v", pos)
+				sensor.Phase = 2
+				sensor.Power = 0
+				tx.SetBlock(pos, sensor, nil)
+				tx.PlaySound(pos.Vec3Centre(), sound.SculkSensorPowerOff{})
+
+				time.AfterFunc(500*time.Millisecond, func() {
+					w.Exec(func(tx *world.Tx) {
+						b := tx.Block(pos)
+						if sensor, ok := b.(SculkSensor); ok {
+							log.Printf("DEBUG-SCULK: Cooldown -> Inactive at %v", pos)
+							sensor.Phase = 0
+							tx.SetBlock(pos, sensor, nil)
+							// Restart scan loop
+							tx.ScheduleBlockUpdate(pos, sensor, 250*time.Millisecond)
+						}
+					})
+				})
+			}
+		})
+	})
 }
 
 // activateNearbyShriekers searches for and activates shriekers within 8 blocks.
@@ -122,7 +132,6 @@ func (s SculkSensor) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *
 	}
 	log.Printf("DEBUG-SCULK: PLACED at %v", pos)
 	place(tx, pos, s, user, ctx)
-	// Start scanning loop
 	tx.ScheduleBlockUpdate(pos, s, 100*time.Millisecond)
 	return placed(ctx)
 }

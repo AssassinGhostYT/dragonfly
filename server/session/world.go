@@ -412,7 +412,7 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 	case particle.VibrationSignal:
 		s.writePacket(&packet.SpawnParticleEffect{
 			Dimension:      0,
-			EntityUniqueID: -1,
+			EntityUniqueID: 0,
 			Position:       vec64To32(pos),
 			ParticleName:   "minecraft:vibration_signal",
 		})
