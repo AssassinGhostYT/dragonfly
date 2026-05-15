@@ -2,6 +2,7 @@ package block
 
 import (
 	"github.com/df-mc/dragonfly/server/block/cube"
+	"github.com/df-mc/dragonfly/server/block/model"
 	"github.com/df-mc/dragonfly/server/item"
 	"github.com/df-mc/dragonfly/server/world"
 	"github.com/df-mc/dragonfly/server/world/particle"
@@ -10,7 +11,6 @@ import (
 	"math"
 	"math/rand"
 	"time"
-	"log"
 )
 
 // SculkSensor is a block that detects vibrations.
@@ -24,6 +24,18 @@ type SculkSensor struct {
 	Power int
 }
 
+// Model ...
+func (SculkSensor) Model() world.BlockModel {
+	return model.SculkSensor{}
+}
+
+// NeighbourUpdateTick starts the scan loop when a neighbour changes (e.g. after chunk load).
+func (s SculkSensor) NeighbourUpdateTick(pos, _ cube.Pos, tx *world.Tx) {
+	if s.Phase == 0 {
+		tx.ScheduleBlockUpdate(pos, s, 0)
+	}
+}
+
 // ScheduledTick ...
 func (s SculkSensor) ScheduledTick(pos cube.Pos, tx *world.Tx, _ *rand.Rand) {
 	if s.Phase == 0 {
@@ -33,6 +45,11 @@ func (s SculkSensor) ScheduledTick(pos cube.Pos, tx *world.Tx, _ *rand.Rand) {
 }
 
 func (s SculkSensor) scan(tx *world.Tx, pos cube.Pos) {
+	var closest mgl64.Vec3
+	var closestEntity world.Entity
+	closestDist := math.MaxFloat64
+	centre := pos.Vec3Centre()
+
 	for e := range tx.EntitiesWithin(cube.Box(
 		float64(pos.X()-8), float64(pos.Y()-8), float64(pos.Z()-8),
 		float64(pos.X()+8), float64(pos.Y()+8), float64(pos.Z()+8),
@@ -40,12 +57,17 @@ func (s SculkSensor) scan(tx *world.Tx, pos cube.Pos) {
 		if sneak, ok := e.(interface{ Sneaking() bool }); ok && sneak.Sneaking() {
 			continue
 		}
-		
-		dist := pos.Vec3Centre().Sub(e.Position()).Len()
-		if dist <= 8 {
-			s.detect(tx, pos, e.Position(), e)
-			return
+
+		origin := e.Position()
+		dist := centre.Sub(origin).Len()
+		if dist <= 8 && dist < closestDist {
+			closest = origin
+			closestEntity = e
+			closestDist = dist
 		}
+	}
+	if closestEntity != nil {
+		s.detect(tx, pos, closest, closestEntity)
 	}
 }
 
@@ -69,8 +91,6 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 	if dist > 8 {
 		return
 	}
-
-	log.Printf("DEBUG-SCULK: Sensor at %v detected vibration from %v (dist=%.2f)", pos, origin, dist)
 
 	s.Power = int(math.Max(1, 15-math.Floor(15.0/8.0*dist)))
 	s.Phase = 1
