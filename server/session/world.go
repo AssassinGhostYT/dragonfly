@@ -413,8 +413,8 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 	case particle.VibrationSignal:
 		log.Printf("[ViewParticle] VibrationSignal sensorPos=%v origin=%v", pos, pa.Origin)
 		s.writePacket(&packet.LevelEvent{
-			EventType: packet.LevelEventParticleLegacyEvent | 77,
-			Position:  vec64To32(pa.Origin),
+			EventType: packet.LevelEventParticlesVibrationSignal,
+			Position:  vec64To32(pos),
 		})
 	case particle.EndermanTeleport:
 		s.writePacket(&packet.LevelEvent{
