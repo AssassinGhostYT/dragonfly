@@ -33,13 +33,18 @@ func (SculkSensor) Source() bool {
 	return true
 }
 
+// RedstoneSource ...
+func (SculkSensor) RedstoneSource() bool {
+	return true
+}
+
 // WeakPower ...
-func (s SculkSensor) WeakPower(cube.Pos, cube.Face, *world.Tx) int {
+func (s SculkSensor) WeakPower(cube.Pos, cube.Face, *world.Tx, bool) int {
 	return s.Power
 }
 
 // StrongPower ...
-func (s SculkSensor) StrongPower(cube.Pos, cube.Face, *world.Tx) int {
+func (s SculkSensor) StrongPower(cube.Pos, cube.Face, *world.Tx, bool) int {
 	return 0
 }
 

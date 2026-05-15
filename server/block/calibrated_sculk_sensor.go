@@ -34,14 +34,19 @@ func (CalibratedSculkSensor) Source() bool {
 	return true
 }
 
+// RedstoneSource ...
+func (CalibratedSculkSensor) RedstoneSource() bool {
+	return true
+}
+
 // WeakPower ...
-func (c CalibratedSculkSensor) WeakPower(cube.Pos, cube.Face, *world.Tx) int {
+func (c CalibratedSculkSensor) WeakPower(cube.Pos, cube.Face, *world.Tx, bool) int {
 	// TODO: Implement power based on vibration frequency.
 	return 0
 }
 
 // StrongPower ...
-func (CalibratedSculkSensor) StrongPower(cube.Pos, cube.Face, *world.Tx) int {
+func (c CalibratedSculkSensor) StrongPower(cube.Pos, cube.Face, *world.Tx, bool) int {
 	return 0
 }
 
