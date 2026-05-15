@@ -10,6 +10,7 @@ import (
 	"math"
 	"math/rand"
 	"time"
+	"log"
 )
 
 // SculkSensor is a block that detects vibrations.
@@ -93,8 +94,8 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 	tx.SetBlock(pos, s, nil)
 
 	tx.PlaySound(pos.Vec3Centre(), sound.SculkSensorPowerOn{})
-	// Particle at the player/source position
-	tx.AddParticle(origin, particle.VibrationSignal{Origin: origin})
+	log.Printf("DEBUG-SCULK: Sensor at %v detected vibration from %v (dist=%.2f)", pos, origin, dist)
+	tx.AddParticle(pos.Vec3Centre(), particle.VibrationSignal{Origin: origin})
 
 	if _, ok := e.(interface{ GameMode() world.GameMode }); ok {
 		s.activateNearbyShriekers(tx, pos)

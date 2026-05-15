@@ -411,6 +411,7 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 			ParticleName:   "minecraft:shriek_particle",
 		})
 	case particle.VibrationSignal:
+		log.Printf("DEBUG-SESSION: sending vibration_signal to client. Dest=%v", pos)
 		s.writePacket(&packet.SpawnParticleEffect{
 			Dimension:      0,
 			EntityUniqueID: 0,
