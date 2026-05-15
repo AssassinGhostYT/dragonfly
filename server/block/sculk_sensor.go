@@ -77,6 +77,7 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 	tx.SetBlock(pos, s, nil)
 
 	tx.PlaySound(pos.Vec3Centre(), sound.SculkSensorPowerOn{})
+	log.Printf("SculkSensor at %v: emitting VibrationSignal from %v", pos, origin)
 	tx.AddParticle(pos.Vec3Centre(), particle.VibrationSignal{Origin: origin})
 
 	if _, ok := e.(interface{ GameMode() world.GameMode }); ok {
