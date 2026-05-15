@@ -48,7 +48,10 @@ func (s SculkSensor) ScheduledTick(pos cube.Pos, tx *world.Tx, _ *rand.Rand) {
 // scan returns true if a vibration was detected.
 func (s SculkSensor) scan(tx *world.Tx, pos cube.Pos) bool {
 	// Radius of 8 blocks (Wiki: 8 block spherical radius)
-	for e := range tx.EntitiesWithin(pos.Box().Grow(8)) {
+	for e := range tx.EntitiesWithin(cube.Box(
+		float64(pos.X()-8), float64(pos.Y()-8), float64(pos.Z()-8),
+		float64(pos.X()+8), float64(pos.Y()+8), float64(pos.Z()+8),
+	)) {
 		if sneak, ok := e.(interface{ Sneaking() bool }); ok && sneak.Sneaking() {
 			continue
 		}
