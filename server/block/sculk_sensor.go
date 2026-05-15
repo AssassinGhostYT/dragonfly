@@ -9,7 +9,6 @@ import (
 	"github.com/df-mc/dragonfly/server/world/sound"
 	"github.com/go-gl/mathgl/mgl64"
 	"math"
-	"math/rand"
 	"time"
 )
 
@@ -29,45 +28,76 @@ func (SculkSensor) Model() world.BlockModel {
 	return model.SculkSensor{}
 }
 
-// NeighbourUpdateTick starts the scan loop when a neighbour changes (e.g. after chunk load).
-func (s SculkSensor) NeighbourUpdateTick(pos, _ cube.Pos, tx *world.Tx) {
-	if s.Phase == 0 {
-		tx.ScheduleBlockUpdate(pos, s, 0)
+// UseOnBlock ...
+func (s SculkSensor) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *world.Tx, user item.User, ctx *item.UseContext) bool {
+	pos, _, ok := firstReplaceable(tx, pos, face, s)
+	if !ok {
+		return false
 	}
+	place(tx, pos, s, user, ctx)
+	if placed(ctx) {
+		s.startScanLoop(tx.World(), pos)
+		return true
+	}
+	return false
 }
 
-// ScheduledTick ...
-func (s SculkSensor) ScheduledTick(pos cube.Pos, tx *world.Tx, _ *rand.Rand) {
-	if s.Phase == 0 {
-		s.scan(tx, pos)
-		tx.ScheduleBlockUpdate(pos, s, 250*time.Millisecond)
-	}
+// startScanLoop begins a periodic scan for entities within 8 blocks.
+func (s SculkSensor) startScanLoop(w *world.World, pos cube.Pos) {
+	time.AfterFunc(100*time.Millisecond, func() {
+		w.Exec(func(tx *world.Tx) {
+			b := tx.Block(pos)
+			sensor, ok := b.(SculkSensor)
+			if !ok {
+				return
+			}
+			if sensor.Phase == 0 {
+				detected := sensor.runScan(tx, pos)
+				if !detected {
+					// No detection, schedule next scan
+					sensor.startScanLoop(w, pos)
+				}
+				// If detected, the cooldown timer in detect() will restart the loop
+			}
+		})
+	})
 }
 
-func (s SculkSensor) scan(tx *world.Tx, pos cube.Pos) {
+// runScan checks for entities within 8 blocks and detects the closest one.
+// Returns true if an entity was detected.
+func (s SculkSensor) runScan(tx *world.Tx, pos cube.Pos) bool {
 	var closest mgl64.Vec3
 	var closestEntity world.Entity
 	closestDist := math.MaxFloat64
 	centre := pos.Vec3Centre()
-
-	for e := range tx.EntitiesWithin(cube.Box(
+	box := cube.Box(
 		float64(pos.X()-8), float64(pos.Y()-8), float64(pos.Z()-8),
 		float64(pos.X()+8), float64(pos.Y()+8), float64(pos.Z()+8),
-	)) {
-		if sneak, ok := e.(interface{ Sneaking() bool }); ok && sneak.Sneaking() {
-			continue
-		}
+	)
 
-		origin := e.Position()
-		dist := centre.Sub(origin).Len()
-		if dist <= 8 && dist < closestDist {
-			closest = origin
-			closestEntity = e
-			closestDist = dist
-		}
+	for e := range tx.EntitiesWithin(box) {
+		s.checkEntity(e, centre, &closest, &closestEntity, &closestDist)
+	}
+	for p := range tx.Players() {
+		s.checkEntity(p, centre, &closest, &closestEntity, &closestDist)
 	}
 	if closestEntity != nil {
 		s.detect(tx, pos, closest, closestEntity)
+		return true
+	}
+	return false
+}
+
+func (s SculkSensor) checkEntity(e world.Entity, centre mgl64.Vec3, closest *mgl64.Vec3, closestEntity *world.Entity, closestDist *float64) {
+	if sneak, ok := e.(interface{ Sneaking() bool }); ok && sneak.Sneaking() {
+		return
+	}
+	origin := e.Position()
+	dist := centre.Sub(origin).Len()
+	if dist <= 8 && dist < *closestDist {
+		*closest = origin
+		*closestEntity = e
+		*closestDist = dist
 	}
 }
 
@@ -103,7 +133,6 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 		s.activateNearbyShriekers(tx, pos)
 	}
 
-	// Stay on for 1.5s then cooldown 0.5s (Total 2s cycle) - Pattern Copy from Shrieker
 	w := tx.World()
 	time.AfterFunc(1500*time.Millisecond, func() {
 		w.Exec(func(tx *world.Tx) {
@@ -120,8 +149,7 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 						if sensor, ok := b.(SculkSensor); ok && sensor.Phase == 2 {
 							sensor.Phase = 0
 							tx.SetBlock(pos, sensor, nil)
-							// Restart scan loop
-							tx.ScheduleBlockUpdate(pos, sensor, 250*time.Millisecond)
+							sensor.startScanLoop(w, pos)
 						}
 					})
 				})
@@ -144,17 +172,6 @@ func (s SculkSensor) activateNearbyShriekers(tx *world.Tx, pos cube.Pos) {
 			}
 		}
 	}
-}
-
-// UseOnBlock ...
-func (s SculkSensor) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *world.Tx, user item.User, ctx *item.UseContext) bool {
-	pos, _, ok := firstReplaceable(tx, pos, face, s)
-	if !ok {
-		return false
-	}
-	place(tx, pos, s, user, ctx)
-	tx.ScheduleBlockUpdate(pos, s, 100*time.Millisecond)
-	return placed(ctx)
 }
 
 // Source ...
@@ -202,3 +219,6 @@ func allSculkSensors() (b []world.Block) {
 	}
 	return
 }
+
+// compile-time check: ensure ScheduledTick is not needed (removed to avoid hash-mismatch issues)
+var _ world.Block = SculkSensor{}
