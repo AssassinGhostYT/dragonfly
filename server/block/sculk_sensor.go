@@ -44,7 +44,7 @@ func (s SculkSensor) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *
 
 // startScanLoop begins a periodic scan for entities within 8 blocks.
 func (s SculkSensor) startScanLoop(w *world.World, pos cube.Pos) {
-	time.AfterFunc(100*time.Millisecond, func() {
+	time.AfterFunc(500*time.Millisecond, func() {
 		w.Exec(func(tx *world.Tx) {
 			b := tx.Block(pos)
 			sensor, ok := b.(SculkSensor)
@@ -54,10 +54,10 @@ func (s SculkSensor) startScanLoop(w *world.World, pos cube.Pos) {
 			if sensor.Phase == 0 {
 				detected := sensor.runScan(tx, pos)
 				if !detected {
-					// No detection, schedule next scan
 					sensor.startScanLoop(w, pos)
 				}
-				// If detected, the cooldown timer in detect() will restart the loop
+			} else {
+				sensor.startScanLoop(w, pos)
 			}
 		})
 	})
@@ -70,16 +70,15 @@ func (s SculkSensor) runScan(tx *world.Tx, pos cube.Pos) bool {
 	var closestEntity world.Entity
 	closestDist := math.MaxFloat64
 	centre := pos.Vec3Centre()
-	box := cube.Box(
-		float64(pos.X()-8), float64(pos.Y()-8), float64(pos.Z()-8),
-		float64(pos.X()+8), float64(pos.Y()+8), float64(pos.Z()+8),
-	)
 
-	for e := range tx.EntitiesWithin(box) {
-		s.checkEntity(e, centre, &closest, &closestEntity, &closestDist)
-	}
 	for p := range tx.Players() {
 		s.checkEntity(p, centre, &closest, &closestEntity, &closestDist)
+	}
+	for e := range tx.EntitiesWithin(cube.Box(
+		float64(pos.X()-8), float64(pos.Y()-8), float64(pos.Z()-8),
+		float64(pos.X()+8), float64(pos.Y()+8), float64(pos.Z()+8),
+	)) {
+		s.checkEntity(e, centre, &closest, &closestEntity, &closestDist)
 	}
 	if closestEntity != nil {
 		s.detect(tx, pos, closest, closestEntity)
