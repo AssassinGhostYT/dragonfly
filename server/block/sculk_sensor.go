@@ -53,7 +53,7 @@ func (s SculkSensor) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *
 
 // startScanLoop begins a periodic scan for entities within 8 blocks.
 func (s SculkSensor) startScanLoop(w *world.World, pos cube.Pos) {
-	time.AfterFunc(500*time.Millisecond, func() {
+	time.AfterFunc(250*time.Millisecond, func() {
 		w.Exec(func(tx *world.Tx) {
 			b := tx.Block(pos)
 			sensor, ok := b.(SculkSensor)
@@ -70,41 +70,32 @@ func (s SculkSensor) startScanLoop(w *world.World, pos cube.Pos) {
 	})
 }
 
-// runScan checks for entities within 8 blocks and detects the closest one.
-// Returns true if an entity was detected.
+// runScan checks for entities within 8 blocks and detects movement.
 func (s SculkSensor) runScan(tx *world.Tx, pos cube.Pos) bool {
-	var closest mgl64.Vec3
-	var closestEntity world.Entity
-	closestDist := math.MaxFloat64
 	centre := pos.Vec3Centre()
-
-	for p := range tx.Players() {
-		s.checkEntity(p, centre, &closest, &closestEntity, &closestDist)
-	}
 	for e := range tx.EntitiesWithin(cube.Box(
 		float64(pos.X()-8), float64(pos.Y()-8), float64(pos.Z()-8),
 		float64(pos.X()+8), float64(pos.Y()+8), float64(pos.Z()+8),
 	)) {
-		s.checkEntity(e, centre, &closest, &closestEntity, &closestDist)
-	}
-	if closestEntity != nil {
-		s.detect(tx, pos, closest, closestEntity)
-		return true
+		if sneak, ok := e.(interface{ Sneaking() bool }); ok && sneak.Sneaking() {
+			continue
+		}
+		
+		var vel mgl64.Vec3
+		if v, ok := e.(interface{ Velocity() mgl64.Vec3 }); ok {
+			vel = v.Velocity()
+		}
+
+		origin := e.Position()
+		dist := centre.Sub(origin).Len()
+		
+		// Wiki: detect if within 8 blocks and vibrating (moving)
+		if dist <= 8 && (vel.Len() > 0.01 || dist < 1.1) {
+			s.detect(tx, pos, origin, e)
+			return true
+		}
 	}
 	return false
-}
-
-func (s SculkSensor) checkEntity(e world.Entity, centre mgl64.Vec3, closest *mgl64.Vec3, closestEntity *world.Entity, closestDist *float64) {
-	if sneak, ok := e.(interface{ Sneaking() bool }); ok && sneak.Sneaking() {
-		return
-	}
-	origin := e.Position()
-	dist := centre.Sub(origin).Len()
-	if dist <= 8 && dist < *closestDist {
-		*closest = origin
-		*closestEntity = e
-		*closestDist = dist
-	}
 }
 
 // EntityInside ...
@@ -125,37 +116,6 @@ func entityUUID(e world.Entity) uuid.UUID {
 	return uuid.Nil
 }
 
-// onCooldown checks if the entity was recently detected at the same position.
-func onCooldown(id uuid.UUID, pos mgl64.Vec3) bool {
-	if id == uuid.Nil {
-		return false
-	}
-	cooldownMu.Lock()
-	defer cooldownMu.Unlock()
-	lastPos, hasPos := entityPositions[id]
-	t, hasTime := entityCooldowns[id]
-	if !hasTime || !hasPos {
-		return false
-	}
-	// If entity moved more than 0.5 blocks, always allow detection
-	if lastPos.Sub(pos).Len() >= 0.5 {
-		return false
-	}
-	// Same position, only allow if cooldown expired
-	return time.Since(t) < 5*time.Second
-}
-
-// setCooldown records the detection time and position for an entity.
-func setCooldown(id uuid.UUID, pos mgl64.Vec3) {
-	if id == uuid.Nil {
-		return
-	}
-	cooldownMu.Lock()
-	defer cooldownMu.Unlock()
-	entityCooldowns[id] = time.Now()
-	entityPositions[id] = pos
-}
-
 // detect attempts to detect a vibration.
 func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e world.Entity) {
 	if s.Phase != 0 {
@@ -167,22 +127,16 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 		return
 	}
 
-	id := entityUUID(e)
-	if onCooldown(id, origin) {
-		log.Printf("[SculkSensor] %v on cooldown or same position, skipping detect", id)
-		return
-	}
-	setCooldown(id, origin)
-
 	s.Power = int(math.Max(1, 15-math.Floor(15.0/8.0*dist)))
 	s.Phase = 1
 	tx.SetBlock(pos, s, nil)
 
-	log.Printf("[SculkSensor] Detected entity %v at distance %.2f, power=%d, origin=%v", id, dist, s.Power, origin)
+	log.Printf("[SculkSensor] Detected entity at distance %.2f, power=%d, origin=%v", dist, s.Power, origin)
 
 	tx.PlaySound(pos.Vec3Centre(), sound.SculkSensorPowerOn{})
-	tx.AddParticle(pos.Vec3Centre(), particle.VibrationSignal{Origin: origin})
-	log.Printf("[SculkSensor] Sent particle VibrationSignal from %v", pos.Vec3Centre())
+	// Particle travels from player to sensor
+	tx.AddParticle(pos.Vec3Centre(), particle.VibrationSignal{Origin: origin, Destination: pos.Vec3Centre()})
+	log.Printf("[SculkSensor] Sent particle VibrationSignal from %v to %v", origin, pos.Vec3Centre())
 
 	if _, ok := e.(interface{ GameMode() world.GameMode }); ok {
 		log.Printf("[SculkSensor] Entity is a player, activating nearby shriekers")
@@ -276,6 +230,3 @@ func allSculkSensors() (b []world.Block) {
 	}
 	return
 }
-
-// compile-time check: ensure ScheduledTick is not needed (removed to avoid hash-mismatch issues)
-var _ world.Block = SculkSensor{}

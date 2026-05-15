@@ -92,6 +92,8 @@ type VibrationSignal struct {
 	particle
 	// Origin is the position where the vibration started.
 	Origin mgl64.Vec3
+	// Destination is the position where the vibration is traveling to.
+	Destination mgl64.Vec3
 }
 
 // particle serves as a base for all particles in this package.
