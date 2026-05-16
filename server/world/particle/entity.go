@@ -1,6 +1,9 @@
 package particle
 
-import "image/color"
+import (
+	"github.com/go-gl/mathgl/mgl64"
+	"image/color"
+)
 
 // HugeExplosion is a particle shown when TNT or a creeper explodes.
 type HugeExplosion struct{ particle }
