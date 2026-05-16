@@ -183,7 +183,7 @@ func TriggerVibration(tx *world.Tx, origin mgl64.Vec3) {
 	for x := -8; x <= 8; x++ {
 		for y := -8; y <= 8; y++ {
 			for z := -8; z <= 8; z++ {
-				p := cube.Pos{int32(origin.X()) + int32(x), int32(origin.Y()) + int32(y), int32(origin.Z()) + int32(z)}
+				p := cube.Pos{int(origin.X()) + x, int(origin.Y()) + y, int(origin.Z()) + z}
 				if sensor, ok := tx.Block(p).(SculkSensor); ok {
 					sensor.detect(tx, p, origin, nil)
 				}
