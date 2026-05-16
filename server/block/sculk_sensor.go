@@ -81,7 +81,7 @@ func (s SculkSensor) runScan(tx *world.Tx, pos cube.Pos) bool {
 		if sneak, ok := e.(interface{ Sneaking() bool }); ok && sneak.Sneaking() {
 			continue
 		}
-		
+
 		var vel mgl64.Vec3
 		if v, ok := e.(interface{ Velocity() mgl64.Vec3 }); ok {
 			vel = v.Velocity()
@@ -89,7 +89,7 @@ func (s SculkSensor) runScan(tx *world.Tx, pos cube.Pos) bool {
 
 		origin := e.Position()
 		dist := centre.Sub(origin).Len()
-		
+
 		// Wiki: detect if within 8 blocks and VIBRATING (moving or stepping on it)
 		// We use a low threshold for movement (0.001) to make it immediate.
 		if dist <= 8 && (vel.Len() > 0.001 || dist < 1.1) {
@@ -201,7 +201,9 @@ func (s SculkSensor) StrongPower(cube.Pos, cube.Face, *world.Tx, bool) int { ret
 
 // LightEmissionLevel ...
 func (s SculkSensor) LightEmissionLevel() uint8 {
-	if s.Phase == 1 { return 1 }
+	if s.Phase == 1 {
+		return 1
+	}
 	return 0
 }
 
