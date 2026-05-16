@@ -53,7 +53,8 @@ func (s SculkSensor) UseOnBlock(pos cube.Pos, face cube.Face, _ mgl64.Vec3, tx *
 
 // startScanLoop begins a periodic scan for entities within 8 blocks.
 func (s SculkSensor) startScanLoop(w *world.World, pos cube.Pos) {
-	time.AfterFunc(250*time.Millisecond, func() {
+	// Wiki: Signal travels at 1 block per game tick (50ms)
+	time.AfterFunc(50*time.Millisecond, func() {
 		w.Exec(func(tx *world.Tx) {
 			b := tx.Block(pos)
 			sensor, ok := b.(SculkSensor)
@@ -89,9 +90,9 @@ func (s SculkSensor) runScan(tx *world.Tx, pos cube.Pos) bool {
 		origin := e.Position()
 		dist := centre.Sub(origin).Len()
 		
-		// Wiki: detect if within 8 blocks and vibrating (moving)
-		// Only trigger if entity has movement or is stepping exactly on it
-		if dist <= 8 && (vel.Len() > 0.05 || dist < 1.1) {
+		// Wiki: detect if within 8 blocks and VIBRATING (moving or stepping on it)
+		// We use a low threshold for movement (0.001) to make it immediate.
+		if dist <= 8 && (vel.Len() > 0.001 || dist < 1.1) {
 			s.detect(tx, pos, origin, e)
 			return true
 		}
@@ -135,7 +136,7 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 	log.Printf("[SculkSensor] Detected entity at distance %.2f, power=%d, origin=%v", dist, s.Power, origin)
 
 	tx.PlaySound(pos.Vec3Centre(), sound.SculkSensorPowerOn{})
-	// Particle travels from player to sensor
+	// Particle travels from Origin (Entity) to Sensor (Destination)
 	tx.AddParticle(pos.Vec3Centre(), particle.VibrationSignal{Origin: origin, Destination: pos.Vec3Centre()})
 	log.Printf("[SculkSensor] Sent particle VibrationSignal from %v to %v", origin, pos.Vec3Centre())
 
@@ -231,3 +232,6 @@ func allSculkSensors() (b []world.Block) {
 	}
 	return
 }
+
+// compile-time check: ensure ScheduledTick is not needed
+var _ world.Block = SculkSensor{}

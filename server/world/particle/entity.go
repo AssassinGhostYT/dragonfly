@@ -32,3 +32,12 @@ type Effect struct {
 
 // EntityFlame is a particle shown when an entity is set on fire.
 type EntityFlame struct{ particle }
+
+// VibrationSignal is a particle shown when a sculk sensor detects a vibration.
+type VibrationSignal struct {
+	particle
+	// Origin is the position where the vibration started.
+	Origin mgl64.Vec3
+	// Destination is the position where the vibration is traveling to.
+	Destination mgl64.Vec3
+}
