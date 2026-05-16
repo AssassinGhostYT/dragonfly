@@ -412,13 +412,13 @@ func (s *Session) ViewParticle(pos mgl64.Vec3, p world.Particle) {
 		})
 	case particle.VibrationSignal:
 		log.Printf("[ViewParticle] VibrationSignal sensorPos=%v origin=%v", pos, pa.Origin)
-		// Vibration Signal (ID 2027): Position is the destination.
-		// EventData is the origin block position encoded as (x & 0xFFF) | ((y & 0xFFF) << 12) | ((z & 0xFFF) << 24).
-		ox, oy, oz := int32(pa.Origin.X()), int32(pa.Origin.Y()), int32(pa.Origin.Z())
+		// Vibration Signal (ID 2027): Position is the START (Origin).
+		// EventData is the END (Sensor position) encoded as (x & 0xFFF) | ((y & 0xFFF) << 12) | ((z & 0xFFF) << 24).
+		dx, dy, dz := int32(pos.X()), int32(pos.Y()), int32(pos.Z())
 		s.writePacket(&packet.LevelEvent{
 			EventType: packet.LevelEventParticlesVibrationSignal,
-			Position:  vec64To32(pos),
-			EventData: (ox & 0xFFF) | ((oy & 0xFFF) << 12) | ((oz & 0xFFF) << 24),
+			Position:  vec64To32(pa.Origin),
+			EventData: (dx & 0xFFF) | ((dy & 0xFFF) << 12) | ((dz & 0xFFF) << 24),
 		})
 	case particle.EndermanTeleport:
 		s.writePacket(&packet.LevelEvent{
