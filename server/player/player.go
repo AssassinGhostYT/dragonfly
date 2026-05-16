@@ -1996,6 +1996,7 @@ func (p *Player) placeBlock(pos cube.Pos, b world.Block, ignoreBBox bool) bool {
 		return false
 	}
 	p.tx.SetBlock(pos, b, nil)
+	block.TriggerVibration(p.tx, pos.Vec3Centre())
 	p.tx.PlaySound(pos.Vec3(), sound.BlockPlace{Block: b})
 	p.SwingArm()
 	return true
@@ -2066,6 +2067,7 @@ func (p *Player) BreakBlock(pos cube.Pos) {
 
 	p.SwingArm()
 	p.tx.SetBlock(pos, nil, nil)
+	block.TriggerVibration(p.tx, pos.Vec3Centre())
 	p.tx.AddParticle(pos.Vec3Centre(), particle.BlockBreak{Block: b})
 
 	if breakable, ok := b.(block.Breakable); ok {
