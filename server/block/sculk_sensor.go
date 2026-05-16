@@ -136,13 +136,19 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 	log.Printf("[SculkSensor] Detected entity at distance %.2f, power=%d, origin=%v", dist, s.Power, origin)
 
 	tx.PlaySound(pos.Vec3Centre(), sound.SculkSensorPowerOn{})
-	// Particle travels from Origin (Entity) to Sensor (Destination)
+	// Particle travels from Origin (Entity/Block) to Sensor (Destination)
 	tx.AddParticle(pos.Vec3Centre(), particle.VibrationSignal{Origin: origin, Destination: pos.Vec3Centre()})
 	log.Printf("[SculkSensor] Sent particle VibrationSignal from %v to %v", origin, pos.Vec3Centre())
 
-	if _, ok := e.(interface{ GameMode() world.GameMode }); ok {
-		log.Printf("[SculkSensor] Entity is a player, activating nearby shriekers")
-		s.activateNearbyShriekers(tx, pos)
+	// If it's a player, we signal nearby shriekers.
+	if e != nil {
+		if _, ok := e.(interface{ GameMode() world.GameMode }); ok {
+			log.Printf("[SculkSensor] Entity is a player, activating nearby shriekers")
+			s.activateNearbyShriekers(tx, pos)
+		}
+	} else {
+		// If e is nil, it means it's a block vibration.
+		log.Printf("[SculkSensor] Block vibration detected at %v", origin)
 	}
 
 	w := tx.World()
@@ -170,6 +176,20 @@ func (s SculkSensor) detect(tx *world.Tx, pos cube.Pos, origin mgl64.Vec3, e wor
 			}
 		})
 	})
+}
+
+// TriggerVibration triggers a vibration at the given position for all nearby sensors.
+func TriggerVibration(tx *world.Tx, origin mgl64.Vec3) {
+	for x := -8; x <= 8; x++ {
+		for y := -8; y <= 8; y++ {
+			for z := -8; z <= 8; z++ {
+				p := cube.Pos{int32(origin.X()) + int32(x), int32(origin.Y()) + int32(y), int32(origin.Z()) + int32(z)}
+				if sensor, ok := tx.Block(p).(SculkSensor); ok {
+					sensor.detect(tx, p, origin, nil)
+				}
+			}
+		}
+	}
 }
 
 // activateNearbyShriekers searches for and activates shriekers within 8 blocks.
